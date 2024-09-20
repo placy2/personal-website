@@ -1,0 +1,38 @@
+name: "Terraform Plan (Non Cloud)"
+
+on:
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    name: "Terraform Plan"
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Download build artifact
+        uses: dawidd6/action-download-artifact@v6
+        with:
+          github_token: ${{ secrets.PAT }}
+          workflow: react-deploy.yml
+          name: react-build
+          path: ./frontend/dist
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Terraform Init
+        id: terraform-init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: terraform-plan
+        run: terraform plan
