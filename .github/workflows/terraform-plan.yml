@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "terraform/**"
+      - ".github/workflows/**"
 
 env:
   TF_CLOUD_ORGANIZATION: "terraform-learning-pl-May24"
