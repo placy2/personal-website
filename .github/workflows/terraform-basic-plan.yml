@@ -31,8 +31,10 @@ jobs:
 
       - name: Terraform Init
         id: terraform-init
+        working-directory: ./terraform
         run: terraform init
 
       - name: Terraform Plan
         id: terraform-plan
+        working-directory: ./terraform
         run: terraform plan
