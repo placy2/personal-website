@@ -8,7 +8,8 @@ on:
       - main
     paths:
       - "terraform/**"
-      - ".github/workflows/**"
+      - ".github/workflows/terraform-apply.yml"
+      - ".github/workflows/terraform-plan.yml"
 
 env:
   TF_CLOUD_ORGANIZATION: "terraform-learning-pl-May24"
