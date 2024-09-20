@@ -8,8 +8,6 @@ on:
       - main
     paths:
       - "terraform/**"
-      - ".github/workflows/terraform-apply.yml"
-      - ".github/workflows/terraform-plan.yml"
 
 env:
   TF_CLOUD_ORGANIZATION: "terraform-learning-pl-May24"
@@ -27,6 +25,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Download build artifact
+        if: github.event_name == 'repository_dispatch'
+        uses: actions/download-artifact@v3
+        with:
+          name: react-build
+          path: ./frontend/dist
 
       - name: Upload Configuration
         uses: hashicorp/tfc-workflows-github/actions/upload-configuration@v1.0.0

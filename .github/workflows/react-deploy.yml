@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - "frontend/**"
-      - ".github/workflows/react-deploy.yml"
+      - ".github/workflows/**"
 
 jobs:
   build:
@@ -28,6 +28,12 @@ jobs:
       - name: Build project
         run: npm run build
         working-directory: ./frontend
+      
+      - name: Publish build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: react-build
+          path: ./frontend/dist
 
       - name: Trigger terraform-apply workflow
         run: |
