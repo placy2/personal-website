@@ -42,7 +42,7 @@ jobs:
             -H "Authorization: token ${{ secrets.PAT }}" \
             https://api.github.com/repos/${{ github.repository }}/dispatches \
             -d '{"event_type":"terraform-apply"}')
-          if [ "$response" -ne 200 ]; then
+          if [ "$response" -ne 204 ]; then
             echo "Failed to trigger terraform-apply workflow. HTTP status code: $response"
             exit 1
           fi
