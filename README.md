@@ -24,3 +24,17 @@ To build the infrastructure, simply run tf init & apply from the `terraform` dir
 ~~- Integrate build & deploy from working app point, iterate.~~
 
 - Build github actions pipelines to deploy infrastructure and to deploy application files that have changed - auto trigger on relevant file updates in `master` branch.
+
+
+## Ideas
+- Photo line/grid that pops in slowly after site is up at first
+- Skills (look for good format/web design pattern to emulate)
+- Easter Egg of some kind
+- Project/work experience highlights - deep dive this repo itself
+- Interactive command line with mini k8s cluster set up
+    - contains stripped down resource list (if possible) with custom resources of some kind
+    - alternatively is some sort of game simulation - i.e. two deployments playing card-style war with each other and trading pods or something similar
+
+Todo 9/19: figure out in tf destroy how to run a plan destroy, detect status, and if nothing is going to happen, don't run the apply (may be automatic)
+
+- maybe migrate from HCP terraform to s3 backend anyway to keep it all AWS for now and simpler to manage/keep pipelines independent
