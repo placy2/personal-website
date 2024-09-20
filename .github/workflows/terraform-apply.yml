@@ -6,7 +6,7 @@ on:
       - main
 
 env:
-  TF_CLOUD_ORGANIZATION: "YOUR-ORGANIZATION-HERE"
+  TF_CLOUD_ORGANIZATION: "terraform-learning-pl-May24"
   TF_API_TOKEN: "${{ secrets.HCP_TF_API_TOKEN }}"
   TF_WORKSPACE: "personal-website-aws"
   CONFIG_DIRECTORY: "./terraform"
