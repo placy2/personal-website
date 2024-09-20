@@ -17,19 +17,18 @@ env:
 
 jobs:
   terraform:
-    if: github.repository != 'hashicorp-education/learn-terraform-github-actions'
     name: "Terraform Apply"
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v3
 
       - name: Download build artifact
         if: github.event_name == 'repository_dispatch'
-        uses: actions/download-artifact@v4
+        uses: dawidd6/action-download-artifact@v6
         with:
+          github_token: ${{ secrets.PAT }}
+          workflow: react-deploy.yml
           name: react-build
           path: ./frontend/dist
 
