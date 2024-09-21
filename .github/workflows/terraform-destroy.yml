@@ -9,6 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      issues: write
     steps:
     - name: Checkout
       uses: actions/checkout@v3
@@ -22,10 +23,12 @@ jobs:
 
     - name: Terraform Init
       id: terraform-init
+      working-directory: ./terraform
       run: terraform init
     
     - name: Terraform Plan Destroy
       id: terraform-plan-destroy
+      working-directory: ./terraform
       run: terraform plan -destroy
     
     - name: Manual Workflow Approval
@@ -35,4 +38,5 @@ jobs:
         approvers: placy2
 
     - name: Terraform Destroy
+      working-directory: ./terraform
       run: terraform destroy -auto-approve
