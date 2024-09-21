@@ -1,11 +1,17 @@
-name: "Terraform Plan"
+name: "Terraform Apply"
 
 on:
-  workflow_dispatch:
+  repository_dispatch:
+    types: [terraform-apply]
+  push:
+    branches:
+      - main
+    paths:
+      - "terraform/**"
 
 jobs:
   terraform:
-    name: "Terraform Plan"
+    name: "Terraform Apply"
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -31,7 +37,7 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
-      - name: Terraform Plan
-        id: terraform-plan
+      - name: Terraform Apply
+        id: terraform-apply
         working-directory: ./terraform
-        run: terraform plan
+        run: terraform apply -auto-approve

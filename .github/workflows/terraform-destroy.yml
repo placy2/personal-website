@@ -3,13 +3,6 @@ name: "Terraform Destroy"
 on:
   workflow_dispatch:
 
-
-env:
-  TF_CLOUD_ORGANIZATION: "terraform-learning-pl-May24"
-  TF_API_TOKEN: "${{ secrets.HCP_TF_API_TOKEN }}"
-  TF_WORKSPACE: "personal-website-aws"
-  CONFIG_DIRECTORY: "./terraform"
-
 jobs:
   terraform:
     name: "Terraform Destroy"
@@ -34,6 +27,12 @@ jobs:
     - name: Terraform Plan Destroy
       id: terraform-plan-destroy
       run: terraform plan -destroy
+    
+    - name: Manual Workflow Approval
+      uses: trstringer/manual-approval@v1.9.1
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        approvers: placy2
 
     - name: Terraform Destroy
       run: terraform destroy -auto-approve

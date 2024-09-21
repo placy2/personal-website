@@ -1,3 +1,13 @@
+# Notes on various learning I undergo, particularly if I end up scrapping it from the repo itself.
+
+## Github actions & Terraform state management
+HCP terraform seems nice and provides some cool integrations, but ultimately it obfuscates too much and particularly for locals, it seems like it does not push up my entire application directory regardless of how I package/build it. Because it is much simpler to just run basic plan & apply commands as I would locally and configure an s3 backend to line up with AWS for now, that is probably the route I will proceed with.
+
+Sample code of HCP plan PR pipeline, before deletion (highlight is the commenting on PR once completed with changes expected & a link):
+
+Personally I prefer the more familiar `terraform init` workflow over uploading configuration. 
+
+```yaml
 name: "Terraform Plan"
 
 on:
@@ -7,9 +17,9 @@ on:
       - ".github/workflows/terraform-plan.yml"
 
 env:
-  TF_CLOUD_ORGANIZATION: "terraform-learning-pl-May24"
+  TF_CLOUD_ORGANIZATION: "<ORG>"
   TF_API_TOKEN: "${{ secrets.HCP_TF_API_TOKEN }}"
-  TF_WORKSPACE: "personal-website-aws"
+  TF_WORKSPACE: "<WORKSPACE>"
   CONFIG_DIRECTORY: "./terraform"
 
 jobs:
@@ -80,3 +90,4 @@ jobs:
               repo: context.repo.repo,
               body: output
             });
+```
