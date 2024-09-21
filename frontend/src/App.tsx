@@ -1,20 +1,26 @@
-import headshotPhoto from './assets/2024headshot.jpeg'
-import './App.css'
+import './stylesheets/App.css'
+import React from 'react';
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import MenuBar from './components/MenuBar';
+import Home from './pages/Home';
+import About from './pages/About';
+import Projects from './pages/Projects';
+import Resume from './pages/Resume';
 
-function App() {
+const App: React.FC = () => {
   return (
-    <>
-      <div>
-        <a href="https://github.com/placy2" target="_blank">
-          <img src={headshotPhoto} className="headshot" alt="Recent headshot of Parker (2023)" />
-        </a>
+    <Router>
+      <MenuBar />
+      <div className="main-content">
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/projects" element={<Projects />} />
+        <Route path="/resume" element={<Resume />} />
+      </Routes>
       </div>
-      <h1>Parker Lacy</h1>
-      <p className="read-the-docs">
-        Cloud Engineer based in the Denver area - passionate about technology, music, and family
-      </p>
-    </>
-  )
-}
+    </Router>
+  );
+};
 
-export default App
+export default App;
