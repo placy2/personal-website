@@ -34,7 +34,4 @@ To build the infrastructure, simply run tf init & apply from the `terraform` dir
 - Interactive command line with mini k8s cluster set up
     - contains stripped down resource list (if possible) with custom resources of some kind
     - alternatively is some sort of game simulation - i.e. two deployments playing card-style war with each other and trading pods or something similar
-
-Todo 9/19: figure out in tf destroy how to run a plan destroy, detect status, and if nothing is going to happen, don't run the apply (may be automatic)
-
-- maybe migrate from HCP terraform to s3 backend anyway to keep it all AWS for now and simpler to manage/keep pipelines independent
+    - data sources such as workout data
