@@ -1,8 +1,14 @@
-#root {
-  margin: 0 auto;
-  padding: 0;
-  text-align: center;
+/* GENERAL LAYOUT */
+
+.main-content {
+  margin-top: 60px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
 }
+
+
+/* Home page */
 
 .headshot {
   height: 15em;
@@ -10,6 +16,7 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .headshot:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
@@ -17,6 +24,6 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-.read-the-docs {
+.home-page-text {
   color: #888;
 }
