@@ -1,18 +1,9 @@
-/* GENERAL LAYOUT */
-
-.main-content {
-  margin-top: 60px;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
-}
-
-
 /* Home page */
 
 .headshot {
   height: 15em;
   padding: 1.5em;
+  margin-top: 60px;
   will-change: filter;
   transition: filter 300ms;
 }
@@ -27,6 +18,8 @@
 .home-page-text {
   color: var(--theme-white);
 }
+
+/* Footer */
 
 footer {
   background-color: var(--theme-purple);
