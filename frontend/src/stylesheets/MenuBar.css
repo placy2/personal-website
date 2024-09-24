@@ -1,5 +1,5 @@
 nav {
-  background-color: #333;
+  background-color: var(--theme-purple);
   overflow: hidden;
   position: fixed; /* Fix the MenuBar at the top */
   top: 0;
@@ -18,19 +18,19 @@ nav ul li {
   padding: 14px 20px;
 }
 
-nav ul li a {
-  color: white;
+nav ul a {
+  color: var(--theme-white);
   text-align: center;
   text-decoration: none;
-  display: block;
 }
 
-nav ul li a:hover {
-  background-color: #ddd;
+nav ul a:hover {
   color: black;
+  background-color: var(--theme-dark-purple);
 }
 
-/* Add a top margin to the main content to avoid overlap */
-.main-content {
-  margin-top: 60px; /* Adjust this value based on the height of the MenuBar */
+.active {
+  font-weight: bold;
+  text-shadow: 3px 3px 3px rgba(0, 0, 0, 0.2);
+  background-color: var(--theme-dark-purple);
 }

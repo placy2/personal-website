@@ -1,8 +1,14 @@
-#root {
-  margin: 0 auto;
-  padding: 0;
-  text-align: center;
+/* GENERAL LAYOUT */
+
+.main-content {
+  margin-top: 60px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
 }
+
+
+/* Home page */
 
 .headshot {
   height: 15em;
@@ -10,6 +16,7 @@
   will-change: filter;
   transition: filter 300ms;
 }
+
 .headshot:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
@@ -17,6 +24,20 @@
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
-.read-the-docs {
-  color: #888;
+.home-page-text {
+  color: var(--theme-white);
+}
+
+footer {
+  background-color: var(--theme-purple);
+  color: var(--theme-white);
+  text-align: center;
+  padding: 1em;
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+}
+
+footer a {
+  text-decoration: underline;
 }

@@ -10,8 +10,11 @@ const Home: React.FC = () => {
         </a>
       </div>
       <h1>Parker Lacy</h1>
-      <p className="read-the-docs">
+      <p className="home-page-text">
         Cloud Engineer based in the Denver area - passionate about technology, music, and family
+      </p>
+      <p className="home-page-text">
+        Exciting CSS animation coming soon?
       </p>
     </>
   )

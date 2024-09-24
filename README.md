@@ -35,3 +35,9 @@ To build the infrastructure, simply run tf init & apply from the `terraform` dir
     - contains stripped down resource list (if possible) with custom resources of some kind
     - alternatively is some sort of game simulation - i.e. two deployments playing card-style war with each other and trading pods or something similar
     - data sources such as workout data
+
+### Styling/layout ideas
+- Move headshot from home page up to top left, retain hover and link functionality
+- bouncing icons of skills I have on the home page? Make them clickable as links to elsewhere for fun, maybe track them in a session token/cookie and have an easter egg for clicking?
+- ![alt text](image.png) + #FBFFF1 Ivory
+- Code pipeline to tell story/timeline (maybe animated resume?)

@@ -6,6 +6,7 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Projects from './pages/Projects';
 import Resume from './pages/Resume';
+import Footer from './components/Footer';
 
 const App: React.FC = () => {
   return (
@@ -19,6 +20,7 @@ const App: React.FC = () => {
         <Route path="/resume" element={<Resume />} />
       </Routes>
       </div>
+      <Footer />
     </Router>
   );
 };
