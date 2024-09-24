@@ -40,3 +40,4 @@ To build the infrastructure, simply run tf init & apply from the `terraform` dir
 - Move headshot from home page up to top left, retain hover and link functionality
 - bouncing icons of skills I have on the home page? Make them clickable as links to elsewhere for fun, maybe track them in a session token/cookie and have an easter egg for clicking?
 - ![alt text](image.png) + #FBFFF1 Ivory
+- Code pipeline to tell story/timeline (maybe animated resume?)

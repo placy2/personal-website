@@ -1,17 +1,16 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import MenuItem from './MenuItem';
 import '../stylesheets/MenuBar.css';
 
 const MenuBar: React.FC = () => {
   return (
     <nav>
       <ul>
-        <li><Link to="/">Home</Link></li>
-        <li><Link to="/about">About</Link></li>
-        <li><Link to="/contact">Contact Form - Coming Soon</Link></li>
-        <li><Link to="/projects">Projects</Link></li>
-        <li><Link to="/resume">Resume</Link></li>
-        <li><Link to="/gallery">Photo Gallery - Coming Soon</Link></li>
+        <MenuItem to="/" label="Home" />
+        <MenuItem to="/about" label="About" />
+        <MenuItem to="/projects" label="Projects" />
+        <MenuItem to="/resume" label="Resume" />
+        <MenuItem to="/gallery" label="Photo Gallery - Coming Soon" />
       </ul>
     </nav>
   );
