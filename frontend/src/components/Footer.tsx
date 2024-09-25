@@ -3,7 +3,7 @@ import React from 'react';
 const Footer: React.FC = () => {
   return (
     <footer>
-      <p className="text-m font-bold">Contact form coming soon - in the meantime find me at <a href="mailto: parkerlacy17@gmail.com">parkerlacy17@gmail.com</a>
+      <p className="text-m">Contact form coming soon - in the meantime find me at <a href="mailto: parkerlacy17@gmail.com">parkerlacy17@gmail.com</a>
       </p>
     </footer>
   );

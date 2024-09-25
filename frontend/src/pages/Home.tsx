@@ -5,7 +5,7 @@ const Home: React.FC = () => {
   return (
     <div className='flex justify-center flex-col items-center'>
       <a href="https://github.com/placy2" target="_blank">
-        <img src={headshotPhoto} className="headshot" alt="Recent headshot of Parker (2023)" />
+        <img src={headshotPhoto} className="headshot" alt="Recent headshot of Parker (2023) - links to Github" />
       </a>
       <h1>Parker Lacy</h1>
       <p className="home-page-text">
