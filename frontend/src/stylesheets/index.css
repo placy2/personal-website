@@ -40,3 +40,14 @@ h1 {
 p,a {
   color: #fbfff1;
 }
+
+/* Media Queries */
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.5em; /* Adjust font size for smaller screens */
+  }
+
+  p, a {
+    font-size: 1em; /* Adjust text size for smaller screens */
+  }
+}

@@ -34,3 +34,19 @@ nav ul a:hover {
   text-shadow: 3px 3px 3px rgba(0, 0, 0, 0.2);
   background-color: var(--theme-dark-purple);
 }
+
+/* Media Queries */
+@media (max-width: 768px) {
+  nav ul {
+    flex-direction: column; /* Stack items vertically */
+    align-items: center; /* Center items */
+  }
+
+  nav ul li {
+    padding: 10px 0; /* Reduce padding */
+  }
+
+  nav {
+    padding: 10px 0; /* Add padding to the nav */
+  }
+}

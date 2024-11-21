@@ -1,17 +1,31 @@
 /* GENERAL LAYOUT */
 
 .main-content {
-  margin-top: 60px;
-  display: flex;
-  justify-content: center;
-  flex-direction: column;
+  padding-top: 120px; /* Increased padding to clear menu */
+  padding-bottom: 120px;
+  box-sizing: border-box;
+  width: 100%;
+  line-height: 3;
 }
 
+.home-page-container {
+  width: 100%;
+  box-sizing: border-box;
+  margin-bottom: 60px;
+  min-height: calc(100vh - 180px); /* Account for header/footer */
+  overflow-y: auto; 
+  position: relative;
+}
 
-/* Home page */
+.icon-container {
+  background-color: #fff;
+  width: 100%;
+  height: calc(100vh - 360px);
+  box-sizing: border-box;
+}
 
 .headshot {
-  height: 15em;
+  height: 20em;
   padding: 1.5em;
   will-change: filter;
   transition: filter 300ms;
@@ -40,4 +54,27 @@ footer {
 
 footer a {
   text-decoration: underline;
+}
+
+/* Media Queries */
+@media (max-width: 768px) {
+  .headshot {
+    height: 10em;
+    margin-top: 60px; /* Increase top margin */
+  }
+
+  .main-content {
+    padding-top: 180px; /* Increase padding further */
+    padding-bottom: 80px; /* Account for footer */
+    min-height: calc(100vh - 260px); /* Adjust height */
+  }
+
+  .home-page-container {
+    padding-top: 80px; /* More padding on mobile */
+  }
+
+  .flag-base{
+    height: 10em;
+    width: 15em;
+  }
 }
