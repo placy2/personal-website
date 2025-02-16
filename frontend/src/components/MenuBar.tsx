@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MenuItem from './MenuItem';
 import '../stylesheets/MenuBar.css';
 
 const MenuBar: React.FC = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  const toggleMenu = () => {
+    setIsMenuOpen(!isMenuOpen);
+  };
+
   return (
     <nav>
-      <ul>
+      <button className="menu-toggle" onClick={toggleMenu}>🍔</button>
+      <ul className={isMenuOpen ? 'show' : ''}>
         <MenuItem to="/" label="Home" />
         <MenuItem to="/about" label="About" />
         <MenuItem to="/projects" label="Projects" />
         <MenuItem to="/resume" label="Resume" />
-        <MenuItem to="/gallery" label="Photo Gallery - Coming Soon" />
       </ul>
     </nav>
   );

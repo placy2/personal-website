@@ -35,11 +35,31 @@ nav ul a:hover {
   background-color: var(--theme-dark-purple);
 }
 
+/* Toggle button for small screens */
+.menu-toggle {
+  display: none;
+  background-color: var(--theme-purple);
+  color: var(--theme-white);
+  border: none;
+  padding: 14px 20px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
 /* Media Queries */
 @media (max-width: 768px) {
   nav ul {
     flex-direction: column; /* Stack items vertically */
     align-items: center; /* Center items */
+    display: none; /* Hide the menu items by default */
+  }
+
+  nav ul.show {
+    display: flex; /* Show the menu items when toggled */
+  }
+
+  .menu-toggle {
+    display: block; /* Show the toggle button */
   }
 
   nav ul li {
