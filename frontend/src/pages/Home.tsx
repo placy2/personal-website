@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import headshotPhoto from '../assets/2024headshot.jpeg'
 import k8sIcon from '../assets/kubernetes_logo.png'
 import tfIcon from '../assets/terraform_logo.png'
@@ -7,6 +7,33 @@ import adoIcon from '../assets/ado_logo.webp'
 import helmIcon from '../assets/helm_logo.png'
 
 const Home: React.FC = () => {
+  // Use hooks to disable scrolling when on Homepage
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 768) {
+        document.body.style.overflow = 'hidden';
+      } else {
+        document.body.style.overflow = 'auto';
+      }
+    };
+
+    // Initial check
+    handleResize();
+
+    // Add event listener
+    window.addEventListener('resize', handleResize);
+
+    // Reset scroll position to top
+    window.scrollTo(0, 40);
+
+    // Cleanup event listener and reset overflow style on unmount
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      document.body.style.overflow = 'auto';
+    };
+  }, []);
+
+
   return (
     <div className='home-page-container'>
       <div>

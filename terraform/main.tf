@@ -87,3 +87,9 @@ resource "aws_cloudfront_distribution" "distribution" {
     target_origin_id       = aws_s3_bucket.bucket.bucket_regional_domain_name
   }
 }
+
+
+# Managing hosted zone for the domain
+resource "aws_route53_zone" "zone" {
+  name = "parkerlacy.com"
+}
