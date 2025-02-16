@@ -3,11 +3,6 @@ name: "Terraform Apply"
 on:
   repository_dispatch:
     types: [terraform-apply]
-  push:
-    branches:
-      - main
-    paths:
-      - "terraform/**"
 
 jobs:
   terraform:
