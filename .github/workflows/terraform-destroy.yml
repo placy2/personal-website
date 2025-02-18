@@ -41,6 +41,8 @@ jobs:
       with:
         secret: ${{ secrets.GITHUB_TOKEN }}
         approvers: placy2
+        issue_title: "Confirm Terraform Destroy"
+        issue_message: "Confirm the plan to destroy the Terraform resources looks good and the destroy action should be applied."
 
     - name: Terraform Destroy
       working-directory: ./terraform
