@@ -1,8 +1,1 @@
-locals {
-  content_types = {
-    ".html" = "text/html",
-    ".css"  = "text/css",
-    ".js"   = "text/javascript",
-    ".jpeg" = "image/jpeg",
-  }
-}
+# This file is now moved to variables.tf to centralize configuration
