@@ -14,7 +14,6 @@ variable "domain_name" {
 variable "bucket_name" {
   description = "S3 bucket name for hosting"
   type        = string
-  default     = ""
 }
 
 variable "enable_cloudfront" {
