@@ -4,7 +4,7 @@ terraform {
     bucket = "parker-terraform-backends"
     key    = "terraform/personal-website/state"
     region = "us-east-1"
-  } 
+  }
 }
 
 provider "aws" {

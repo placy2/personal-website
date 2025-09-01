@@ -18,7 +18,7 @@ variable "bucket_name" {
 }
 
 variable "enable_cloudfront" {
-  description = "Whether to enable CloudFront distribution (disable for cost savings in dev)"
+  description = "Whether to enable CloudFront distribution (disable by default for cost savings in dev)"
   type        = bool
   default     = false
 }
@@ -33,31 +33,7 @@ variable "tags" {
   description = "Common tags to apply to all resources"
   type        = map(string)
   default = {
-    Project     = "personal-website"
-    ManagedBy   = "terraform"
-  }
-}
-
-# Derived locals
-locals {
-  bucket_name = var.bucket_name != "" ? var.bucket_name : "${var.domain_name}-${var.environment}-hosting"
-  
-  common_tags = merge(var.tags, {
-    Environment = var.environment
-  })
-  
-  content_types = {
-    ".html" = "text/html"
-    ".css"  = "text/css"
-    ".js"   = "text/javascript"
-    ".jpeg" = "image/jpeg"
-    ".jpg"  = "image/jpeg"
-    ".png"  = "image/png"
-    ".webp" = "image/webp"
-    ".svg"  = "image/svg+xml"
-    ".gif"  = "image/gif"
-    ".ico"  = "image/x-icon"
-    ".json" = "application/json"
-    ".txt"  = "text/plain"
+    Project   = "personal-website"
+    ManagedBy = "terraform"
   }
 }

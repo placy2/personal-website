@@ -1,7 +1,7 @@
 # https://pfertyk.me/2023/01/creating-a-static-website-with-terraform-and-aws/
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = local.bucket_name
+  bucket = var.bucket_name
   tags   = local.common_tags
 }
 
@@ -32,10 +32,10 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
 }
 
 resource "aws_s3_object" "file" {
-  for_each = fileset(path.module, "../frontend/dist/**/*.{html,css,js,jpeg,jpg,png,webp,svg,gif,ico}")
-  bucket   = aws_s3_bucket.bucket.id
-  key      = replace(each.value, "/^..\/frontend\/dist\//", "")
-  source   = each.value
+  for_each     = fileset(path.module, "../frontend/dist/**/*.{html,css,js,jpeg,jpg,png,webp,svg,gif,ico}")
+  bucket       = aws_s3_bucket.bucket.id
+  key          = replace(each.value, "/^../frontend/dist//", "")
+  source       = each.value
   content_type = lookup(local.content_types, regex("\\.[^.]+$", each.value), "application/octet-stream")
   source_hash  = filemd5(each.value)
 
