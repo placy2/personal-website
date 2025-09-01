@@ -11,7 +11,9 @@ const MenuBar: React.FC = () => {
 
   return (
     <nav>
-      <button className="menu-toggle" onClick={toggleMenu}>🍔</button>
+      <button className="menu-toggle" onClick={toggleMenu}>
+        🍔
+      </button>
       <ul className={isMenuOpen ? 'show' : ''}>
         <MenuItem to="/" label="Home" />
         <MenuItem to="/about" label="About" />

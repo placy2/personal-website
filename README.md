@@ -1,138 +1,215 @@
-# personal-website
-An evolving repo with the goal of publishing a 'resume' site of some sort to parkerlacy.com. This is likely to be a pretty piecemeal process with lots of notetaking and learning about hosting, as well as configuring IaC with a cloud provider &amp; deciding on how to configure the React app.
+# Personal Website
 
-# React Setup Documentatino
+An evolving personal portfolio website for [parkerlacy.com](https://parkerlacy.com), showcasing cloud engineering expertise with a focus on modern development practices and cost-effective infrastructure.
 
-This application is built with Vite + React configured as a statically-served website.
+## 🚀 Quick Start
 
-## Project Structure
+### With Docker (Recommended)
+```bash
+# One-command setup
+./scripts/dev-setup.sh
 
-The React application is located in the `/frontend` directory. The main files and directories include:
-- `/src`: Contains the source code for the React application.
-- `/public`: Contains static assets such as images and the `index.html` file.
-- `vite.config.js`: Configuration file for Vite.
-- `package.json`: Lists the project dependencies and scripts.
+# Or manually
+docker-compose up --build
 
-## Local Development
+# View at http://localhost:5173
+```
 
-To debug this application locally, navigate to the `/frontend` directory.
-
-Then, you can debug the app or build it locally using the following commands:
-
-```sh
-# Install Node dependencies
+### Traditional Development
+```bash
+cd frontend
 npm install
-
-# Debug with Hot Module Replacement
 npm run dev
 
-# Build the project into /frontend/dist
-npm run build
-
-# Preview the built project from /frontend/dist served locally
-npm run preview
+# View at http://localhost:5173
 ```
 
-## Environment Variables
+## 🏗️ Architecture
 
-You can configure environment variables for different environments by creating `.env` files in the `/frontend` directory. For example:
-- `.env`: Default environment variables.
-- `.env.development`: Variables for the development environment.
-- `.env.production`: Variables for the production environment.
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: CSS with custom properties
+- **Infrastructure**: AWS S3 + CloudFront + Route 53
+- **IaC**: Terraform with environment-specific configurations
+- **CI/CD**: GitHub Actions with automated testing and deployment
+- **Testing**: Vitest + React Testing Library
+- **Containerization Options**: Docker Compose w/ dev & prod configuration options
 
-## Deployment
+## 📁 Project Structure
 
-After building the project, the static files will be located in the `/frontend/dist` directory. These files can be deployed to the S3 bucket configured in the Terraform setup. You can use the AWS CLI to sync the files locally:
-
-```sh
-aws s3 sync /frontend/dist s3://your-s3-bucket-name
+```
+personal-website/
+├── frontend/                 # React application
+│   ├── src/
+│   │   ├── components/      # Reusable components
+│   │   ├── pages/          # Page components
+│   │   ├── constants/      # Shared constants
+│   │   └── stylesheets/    # CSS files
+│   ├── public/             # Static assets
+│   └── dist/              # Build output
+├── terraform/              # Infrastructure as Code
+│   ├── *.tf               # Terraform configuration
+│   ├── dev.tfvars        # Development environment
+│   └── prod.tfvars       # Production environment
+├── scripts/               # Helper scripts
+└── .github/              # CI/CD workflows
 ```
 
-Make sure to replace `your-s3-bucket-name` with the actual name of your S3 bucket.
+## 🛠️ Development
 
-## Additional Resources
+### Available Scripts
 
-- [Vite Documentation](https://vitejs.dev/guide/)
-- [React Documentation](https://reactjs.org/docs/getting-started.html)
+#### Frontend
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run preview      # Preview production build using vite
+npm run test         # Run tests in watch mode
+npm run test:run     # Run tests once
+npm run lint         # Lint code
+npm run lint:fix     # Fix linting issues
+npm run format       # Format code with Prettier
+npm run format:check # Check formatting
+```
 
-# Terraform Setup Documentation
+#### Infrastructure
+```bash
+./scripts/deploy.sh dev plan      # Plan development deployment
+./scripts/deploy.sh dev apply     # Deploy to development
+./scripts/deploy.sh prod plan     # Plan production deployment
+./scripts/deploy.sh prod apply    # Deploy to production
+./scripts/teardown.sh dev         # Destroy development infrastructure
+```
 
-## Overview
-This Terraform setup is designed to provision and manage the infrastructure required to host a static website on AWS. The configuration includes resources for an S3 bucket to store the website files, a CloudFront distribution for content delivery, and a Route 53 hosted zone for DNS management.
+### Environment Configuration
 
-## Resources
-- **S3 Bucket**: Stores the static website files.
-- **S3 Bucket Policy**: Configures public access to the S3 bucket.
-- **S3 Bucket Website Configuration**: Sets up the S3 bucket to serve as a static website.
-- **CloudFront Distribution**: Distributes the website content globally with low latency.
-- **Route 53 Hosted Zone**: Manages the DNS records for the domain.
+Copy `.env.example` to `.env.local` and customize:
 
-## Running Terraform Commands Locally
+```bash
+cp .env.example .env.local
+```
 
-1. **Initialize Terraform**:
-    ```sh
-    terraform init
-    ```
+## 🌍 Environments
 
-2. **Plan the Infrastructure Changes**:
-    ```sh
-    terraform plan
-    ```
+### Development
+- **S3 Only**: No CloudFront for cost savings
+- **Bucket**: `parkerlacy-dev-hosting`
+- **Domain**: S3 website endpoint
 
-3. **Apply the Infrastructure Changes**:
-    ```sh
-    terraform apply
-    ```
+### Production
+- **Full Stack**: S3 + CloudFront + Route 53
+- **Bucket**: `parkerlacy-website-hosting-bucket`
+- **Domain**: `parkerlacy.com`
 
-4. **Destroy the Infrastructure** (if needed):
-    ```sh
-    terraform destroy
-    ```
+## 📋 Infrastructure Management
 
-Make sure to configure your AWS credentials before running these commands. You can do this by setting the `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` environment variables or by using the AWS CLI configuration.
+### Cost-Optimized Development
+```bash
+# Deploy minimal infrastructure (S3 only)
+./scripts/deploy.sh dev apply
 
+# Quickly tear down to save costs
+./scripts/teardown.sh dev
+```
 
-# GitHub Actions Documentation
+### Production Deployment
+```bash
+# Deploy full infrastructure (S3 + CloudFront + Route 53)
+./scripts/deploy.sh prod apply
+```
 
-## Workflows
+### Manual Terraform Commands
+```bash
+cd terraform
 
-### 1. `terraform-basic-apply.yml`
+# Initialize
+terraform init
 
-This workflow is triggered by a repository dispatch event of type `terraform-apply`. It performs the following steps:
-- Checks out the repository.
-- Downloads the build artifact from the `react-deploy.yml` workflow.
-- Configures AWS credentials.
-- Sets up Terraform.
-- Initializes Terraform.
-- Applies the Terraform configuration to provision infrastructure.
+# Plan with environment-specific variables
+terraform plan -var-file="dev.tfvars"
 
-### 2. `terraform-basic-plan.yml`
+# Apply changes
+terraform apply -var-file="dev.tfvars"
 
-This workflow is triggered by a workflow dispatch event or a pull request affecting the Terraform configuration or the workflow file itself. It performs the following steps:
-- Checks out the repository.
-- Downloads the build artifact from the `react-deploy.yml` workflow.
-- Configures AWS credentials.
-- Sets up Terraform.
-- Initializes Terraform.
-- Plans the Terraform configuration to show the changes that would be applied.
+# Destroy infrastructure
+terraform destroy -var-file="dev.tfvars"
+```
 
-### 3. `react-deploy.yml`
+## 🔧 Testing
 
-This workflow is triggered by a push to the `main` branch or changes in the frontend directory or workflow files. It performs the following steps:
-- Checks out the repository.
-- Sets up Node.js.
-- Installs dependencies.
-- Builds the project.
-- Publishes the build artifact.
-- Triggers the `terraform-apply` workflow.
+### Running Tests
+```bash
+# Run all tests
+npm run test
 
-### 4. `terraform-destroy.yml`
+# Run tests once
+npm run test:run
 
-This workflow is triggered manually via workflow dispatch. It performs the following steps:
-- Checks out the repository.
-- Configures AWS credentials.
-- Sets up Terraform.
-- Initializes Terraform.
-- Plans the destruction of the Terraform-managed infrastructure.
-- Waits for manual approval.
-- Destroys the Terraform-managed infrastructure.
+# Run with coverage
+npm run test:coverage
+```
+
+### Writing Tests
+Tests are written using Vitest and React Testing Library. Examples can be found in:
+- `src/App.test.tsx`
+- `src/pages/Home.test.tsx`
+
+## 🚀 Deployment
+
+### Automated (GitHub Actions)
+- **Pull Requests**: Automatically test and plan infrastructure changes
+- **Main Branch**: Deploy to development environment
+- **Production**: Manual approval required via GitHub environments
+
+### Manual Deployment
+```bash
+# Build frontend
+cd frontend && npm run build
+
+# Deploy infrastructure
+./scripts/deploy.sh prod apply
+```
+
+## 🔒 Security
+
+- Dependabot for automated dependency updates
+- Security scanning in CI/CD pipeline
+- Least privilege AWS IAM policies
+- HTTPS everywhere with CloudFront
+
+## 🎨 Code Quality
+
+- **ESLint**: Code linting with TypeScript support
+- **Prettier**: Consistent code formatting
+- **TypeScript**: Type safety and better development experience
+- **Testing**: Comprehensive test coverage with Vitest
+- **Pre-commit hooks**: Planned for future implementation
+
+## 📦 Docker
+
+### Development
+```dockerfile
+# Dockerfile.dev - Hot reloading with volume mounts
+docker-compose up
+```
+
+### Production
+```dockerfile
+# Dockerfile - Optimized production build
+docker-compose -f docker-compose.prod.yml up
+```
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make changes with tests
+4. Ensure all tests pass
+5. Submit a pull request
+
+## 📄 License
+
+This project is personal and proprietary to Parker Lacy.
+
+---
+
+**Focus**: Easy local development + Simple cloud cost management + Industry best practices

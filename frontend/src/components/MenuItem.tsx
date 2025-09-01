@@ -7,12 +7,9 @@ interface MenuItemProps extends NavLinkProps {
 
 const MenuItem: React.FC<MenuItemProps> = ({ label, ...navLinkProps }) => {
   return (
-      <NavLink
-        {...navLinkProps}
-        className={({ isActive }) => (isActive ? 'active' : '')}
-      >
-        <li>{label}</li>
-      </NavLink>
+    <NavLink {...navLinkProps} className={({ isActive }) => (isActive ? 'active' : '')}>
+      <li>{label}</li>
+    </NavLink>
   );
 };
 
