@@ -119,7 +119,7 @@ jobs:
 
       - name: Terraform Plan (Dev)
         working-directory: ./terraform
-        run: terraform plan -var-file="./env/dev.tfvars" -no-color
+        run: terraform plan -var-file="env/dev.tfvars" -no-color
         continue-on-error: true
 
   deploy-dev:
@@ -157,7 +157,7 @@ jobs:
 
       - name: Deploy to Development
         working-directory: ./terraform
-        run: terraform apply -var-file="./env/dev.tfvars" -auto-approve
+        run: terraform apply -var-file="env/dev.tfvars" -auto-approve
 
       - name: Output URLs
         working-directory: ./terraform
@@ -197,7 +197,7 @@ jobs:
 
       - name: Terraform Plan (Prod)
         working-directory: ./terraform
-        run: terraform plan -var-file="./env/prod.tfvars" -no-color
+        run: terraform plan -var-file="env/prod.tfvars" -no-color
 
   deploy-prod-apply:
     name: Deploy to Production
@@ -236,7 +236,7 @@ jobs:
 
       - name: Deploy to Production
         working-directory: ./terraform
-        run: terraform apply -var-file="./env/prod.tfvars" -auto-approve
+        run: terraform apply -var-file="env/prod.tfvars" -auto-approve
 
       - name: Output URLs
         working-directory: ./terraform
