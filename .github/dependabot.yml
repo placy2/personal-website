@@ -41,3 +41,18 @@ updates:
     commit-message:
       prefix: "chore(docker):"
       include: "scope"
+
+  # Terraform
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 3
+    reviewers:
+      - "placy2"
+    commit-message:
+      prefix: "chore(terraform):"
+      include: "scope"
+      
