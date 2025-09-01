@@ -10,7 +10,7 @@ on:
       - "frontend/**"
       - "terraform/**"
       - ".github/workflows/**"
-  pull_request:
+  pull_request_target:
     branches: [main]
     paths:
       - "frontend/**"
@@ -89,7 +89,7 @@ jobs:
     name: Terraform Plan
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    if: github.event_name == 'pull_request_target' || github.event_name == 'push'
     
     steps:
       - name: Checkout
