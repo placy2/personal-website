@@ -3,6 +3,11 @@ updates:
   # Frontend dependencies
   - package-ecosystem: "npm"
     directory: "/frontend"
+    groups:
+      prod-deps:
+        dependency-type: production
+      dev-deps:
+        dependency-type: development
     schedule:
       interval: "weekly"
       day: "monday"
