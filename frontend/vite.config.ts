@@ -1,15 +1,15 @@
-import { defineConfig, loadEnv } from 'vite'
-import react from '@vitejs/plugin-react-swc'
-import path from 'path'
+import { defineConfig, loadEnv } from 'vite';
+import react from '@vitejs/plugin-react-swc';
+import path from 'path';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   // Load env file based on `mode` in the current working directory.
-  const env = loadEnv(mode, process.cwd(), '')
-  
+  const env = loadEnv(mode, process.cwd(), '');
+
   return {
     plugins: [react()],
-    
+
     // Build optimizations
     build: {
       target: 'esnext',
@@ -23,7 +23,7 @@ export default defineConfig(({ mode }) => {
         },
       },
     },
-    
+
     // Development server configuration
     server: {
       port: 5173,
@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
         port: 5173,
       },
     },
-    
+
     // Resolve aliases for cleaner imports
     resolve: {
       alias: {
@@ -44,10 +44,10 @@ export default defineConfig(({ mode }) => {
         '@styles': path.resolve(__dirname, 'src/stylesheets'),
       },
     },
-    
+
     // Environment variables
     define: {
       __APP_VERSION__: JSON.stringify(env.VITE_APP_VERSION || '1.0.0'),
     },
-  }
-})
+  };
+});

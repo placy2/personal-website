@@ -10,7 +10,7 @@
   --theme-purple: #646cff;
   --theme-dark-purple: #363fdb;
   --theme-teal: #0e7c7b;
-  --theme-black: #2D2D2A;
+  --theme-black: #2d2d2a;
   --theme-white: #fbfff1;
   --theme-tan: #d7b29d;
   --theme-pink: #bf98a0;
@@ -37,7 +37,8 @@ h1 {
   color: #fbfff1;
 }
 
-p,a {
+p,
+a {
   color: #fbfff1;
 }
 
@@ -47,7 +48,8 @@ p,a {
     font-size: 2.5em; /* Adjust font size for smaller screens */
   }
 
-  p, a {
+  p,
+  a {
     font-size: 1em; /* Adjust text size for smaller screens */
   }
 }

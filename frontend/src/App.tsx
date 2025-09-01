@@ -1,4 +1,4 @@
-import './stylesheets/App.css'
+import './stylesheets/App.css';
 import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import MenuBar from './components/MenuBar';
@@ -13,12 +13,12 @@ const App: React.FC = () => {
     <Router>
       <MenuBar />
       <div className="main-content">
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/projects" element={<Projects />} />
-        <Route path="/resume" element={<Resume />} />
-      </Routes>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/projects" element={<Projects />} />
+          <Route path="/resume" element={<Resume />} />
+        </Routes>
       </div>
       <Footer />
     </Router>

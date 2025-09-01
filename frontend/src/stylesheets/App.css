@@ -14,7 +14,7 @@
   box-sizing: border-box;
   margin-bottom: 60px;
   min-height: calc(100vh - 180px); /* Account for header/footer */
-  overflow-y: auto; 
+  overflow-y: auto;
   position: relative;
 }
 
@@ -40,10 +40,12 @@
   transition: filter 300ms;
 }
 
-.headshot:hover, .icon:hover {
+.headshot:hover,
+.icon:hover {
   filter: drop-shadow(0 0 2em #646cffaa);
 }
-.headshot.react:hover, .icon.react:hover {
+.headshot.react:hover,
+.icon.react:hover {
   filter: drop-shadow(0 0 2em #61dafbaa);
 }
 
@@ -81,12 +83,12 @@ footer a {
     padding-top: 80px; /* More padding on mobile */
   }
 
-  .flag-base{
+  .flag-base {
     height: 10em;
     width: 15em;
   }
 
-  .icon{
+  .icon {
     height: 25px;
     width: 25px;
   }

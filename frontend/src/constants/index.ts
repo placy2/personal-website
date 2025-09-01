@@ -2,7 +2,8 @@
 export const APP_CONFIG = {
   name: 'Parker Lacy Portfolio',
   title: 'Parker Lacy - Cloud/DevOps',
-  description: 'Cloud Engineer based in the Denver area. Passionate about technology, music, and family.',
+  description:
+    'Cloud Engineer based in the Denver area. Passionate about technology, music, and family.',
   author: 'Parker Lacy',
   url: 'https://parkerlacy.com',
 } as const;
@@ -11,7 +12,7 @@ export const APP_CONFIG = {
 export const ROUTES = {
   HOME: '/',
   ABOUT: '/about',
-  PROJECTS: '/projects', 
+  PROJECTS: '/projects',
   RESUME: '/resume',
 } as const;
 
@@ -40,7 +41,7 @@ export const TECHNOLOGIES = [
     icon: 'kubernetes_logo.png',
   },
   {
-    name: 'Terraform', 
+    name: 'Terraform',
     url: EXTERNAL_LINKS.TERRAFORM,
     icon: 'terraform_logo.png',
   },
