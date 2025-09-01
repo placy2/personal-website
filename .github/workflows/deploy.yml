@@ -15,6 +15,7 @@ on:
     paths:
       - "frontend/**"
       - "terraform/**"
+      - ".github/workflows/**"
   workflow_dispatch:
 
 env:
