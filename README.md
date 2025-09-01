@@ -32,6 +32,7 @@ npm run dev
 - **IaC**: Terraform with environment-specific configurations
 - **CI/CD**: GitHub Actions with automated testing and deployment
 - **Testing**: Vitest + React Testing Library
+- **Containerization Options**: Docker Compose w/ dev & prod configuration options
 
 ## 📁 Project Structure
 
@@ -61,6 +62,7 @@ personal-website/
 ```bash
 npm run dev          # Start development server
 npm run build        # Build for production
+npm run preview      # Preview production build using vite
 npm run test         # Run tests in watch mode
 npm run test:run     # Run tests once
 npm run lint         # Lint code

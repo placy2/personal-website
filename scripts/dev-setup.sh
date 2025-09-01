@@ -12,7 +12,7 @@ if ! command -v docker &> /dev/null; then
 fi
 
 # Check if Docker Compose is installed
-if ! command -v docker-compose &> /dev/null; then
+if ! command -v docker compose &> /dev/null; then
     echo "❌ Docker Compose is not installed. Please install Docker Compose first."
     exit 1
 fi
@@ -25,15 +25,15 @@ fi
 
 # Build and start development environment
 echo "🔧 Building development environment..."
-docker-compose up --build -d
+sudo docker compose up --build -d
 
 echo "✅ Development environment is ready!"
 echo ""
 echo "🌐 Application is running at: http://localhost:5173"
 echo ""
 echo "Useful commands:"
-echo "  📊 View logs:     docker-compose logs -f"
-echo "  🛑 Stop:          docker-compose down"
-echo "  🔄 Restart:       docker-compose restart"
-echo "  🧹 Clean:         docker-compose down -v --rmi all"
+echo "  📊 View logs:     docker compose logs -f"
+echo "  🛑 Stop:          docker compose down"
+echo "  🔄 Restart:       docker compose restart"
+echo "  🧹 Clean:         docker compose down -v --rmi all"
 echo ""
