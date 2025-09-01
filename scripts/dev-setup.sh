@@ -25,7 +25,7 @@ fi
 
 # Build and start development environment
 echo "🔧 Building development environment..."
-sudo docker compose up --build -d
+docker compose up --build -d
 
 echo "✅ Development environment is ready!"
 echo ""
