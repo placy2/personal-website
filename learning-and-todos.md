@@ -15,6 +15,7 @@ Some well-formed ideas, some half-baked thoughts - things I want to add to this 
 - Improve content on the website - more interesting Projects page information & describe my focuses and skills more clearly on home page
 
 - Build improved PR workflows, checking for linting & formatting across frontend & IaC 
+  - May involve separating some things back out so I can leverage security of pull_request vs pull_request_target
 
 - Handle all current outdated dependencies and upgrade to supported maximum (note especially terraform dependabot itself doesn't support > 1.10.0)
 
