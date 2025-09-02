@@ -37,7 +37,7 @@ jobs:
       run: terraform plan -destroy
     
     - name: Manual Workflow Approval
-      uses: trstringer/manual-approval@v1.9.1
+      uses: trstringer/manual-approval@v1.11.0
       with:
         secret: ${{ secrets.GITHUB_TOKEN }}
         approvers: placy2
