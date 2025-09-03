@@ -73,11 +73,26 @@ jobs:
           
           echo "Looking for last successful run of job: $JOB_NAME"
           
-          # Get workflow runs for the deploy workflow
+          # Get workflow id for the deploy workflow by name
+          WORKFLOW_ID=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${{ github.repository }}/actions/workflows" \
+            --jq ".workflows[] | select(.name == \"$WORKFLOW_NAME\") | .id")
+          
+          if [ -z "$WORKFLOW_ID" ]; then
+            echo "Could not find workflow with name: $WORKFLOW_NAME"
+            echo "should-cleanup=false" >> $GITHUB_OUTPUT
+            echo "days-since-deploy=unknown" >> $GITHUB_OUTPUT
+            echo "last-deploy-date=never" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Get workflow runs for the deploy workflow using its id
           LAST_DEPLOY=$(gh api \
             -H "Accept: application/vnd.github+json" \
             -H "X-GitHub-Api-Version: 2022-11-28" \
-            "/repos/${{ github.repository }}/actions/workflows/deploy.yml/runs" \
+            "/repos/${{ github.repository }}/actions/workflows/$WORKFLOW_ID/runs" \
             --jq '.workflow_runs[] | select(.status == "completed" and .conclusion == "success") | .created_at' \
             | head -1)
           
