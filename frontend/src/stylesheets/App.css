@@ -74,13 +74,26 @@ footer a {
   }
 
   .main-content {
-    padding-top: 60px; /* Increase padding further */
-    padding-bottom: 80px; /* Account for footer */
-    min-height: calc(100vh - 260px); /* Adjust height */
+    width: 95%; /* Increase width for better mobile use of space */
+    padding-top: 80px; /* Adjust for mobile nav height */
+    padding-bottom: 100px; /* Account for footer */
+    padding-left: 16px; /* Add horizontal padding */
+    padding-right: 16px;
+    line-height: 1.6; /* Reduce line height for better mobile readability */
+    min-height: calc(100vh - 180px); /* Adjust height calculation */
   }
 
   .home-page-container {
-    padding-top: 80px; /* More padding on mobile */
+    padding-top: 20px; /* Reduce top padding */
+    margin-bottom: 40px; /* Reduce bottom margin */
+  }
+
+  .icon-container {
+    height: auto; /* Remove fixed height for better mobile flow */
+    flex-wrap: wrap; /* Allow icons to wrap on smaller screens */
+    gap: 15px; /* Slightly reduce gap */
+    margin-top: 30px;
+    margin-bottom: 30px;
   }
 
   .flag-base {
@@ -89,7 +102,12 @@ footer a {
   }
 
   .icon {
-    height: 25px;
-    width: 25px;
+    height: 40px; /* Increase from 25px for better visibility */
+    width: 40px;
+    transition: transform 0.2s ease; /* Add smooth interaction */
+  }
+
+  .icon:active {
+    transform: scale(0.95); /* Provide touch feedback */
   }
 }

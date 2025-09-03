@@ -52,6 +52,12 @@ nav ul a:hover {
     flex-direction: column; /* Stack items vertically */
     align-items: center; /* Center items */
     display: none; /* Hide the menu items by default */
+    width: 100%;
+    background-color: var(--theme-purple);
+    position: absolute;
+    top: 100%;
+    left: 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   nav ul.show {
@@ -60,13 +66,30 @@ nav ul a:hover {
 
   .menu-toggle {
     display: block; /* Show the toggle button */
+    min-height: 44px; /* Ensure touch target meets accessibility standards */
+    min-width: 44px;
   }
 
   nav ul li {
-    padding: 10px 0; /* Reduce padding */
+    padding: 0; /* Remove padding from li */
+    width: 100%;
+  }
+
+  nav ul a {
+    display: block;
+    padding: 16px 20px; /* Increase touch target size */
+    min-height: 44px; /* Ensure minimum touch target size */
+    box-sizing: border-box;
+    width: 100%;
+    border-bottom: 1px solid var(--theme-dark-purple);
+  }
+
+  nav ul a:last-child {
+    border-bottom: none;
   }
 
   nav {
-    padding: 10px 0; /* Add padding to the nav */
+    padding: 0; /* Remove nav padding to prevent layout issues */
+    position: relative; /* Ensure dropdown positioning works */
   }
 }

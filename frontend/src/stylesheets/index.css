@@ -46,10 +46,38 @@ a {
 @media (max-width: 768px) {
   h1 {
     font-size: 2.5em; /* Adjust font size for smaller screens */
+    margin-bottom: 0.5em; /* Add better spacing */
+  }
+
+  h2 {
+    font-size: 1.8em; /* Add responsive h2 sizing */
+    margin-bottom: 0.8em;
+    line-height: 1.3;
+  }
+
+  h3 {
+    font-size: 1.4em; /* Add responsive h3 sizing */
+    margin-bottom: 0.6em;
+    line-height: 1.4;
   }
 
   p,
   a {
     font-size: 1em; /* Adjust text size for smaller screens */
+    line-height: 1.6; /* Better mobile reading experience */
+    margin-bottom: 1em; /* Add paragraph spacing */
+  }
+
+  /* Improve touch targets for links */
+  a {
+    min-height: 44px;
+    display: inline-block;
+    padding: 8px 0;
+  }
+
+  /* Better spacing for mobile content */
+  body {
+    -webkit-text-size-adjust: 100%; /* Prevent text scaling on iOS */
+    text-size-adjust: 100%;
   }
 }
