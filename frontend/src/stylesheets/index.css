@@ -29,6 +29,24 @@ body {
   padding: 0;
   min-width: 320px;
   min-height: 100vh;
+  /* Enhanced mobile browser support */
+  -webkit-touch-callout: none; /* Disable callout on iOS */
+  -webkit-user-select: none; /* Prevent text selection issues on mobile */
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Re-enable text selection for readable content */
+  -webkit-tap-highlight-color: rgba(100, 108, 255, 0.3); /* Custom tap highlight */
+}
+
+/* Re-enable text selection for content areas */
+h1, h2, h3, h4, h5, h6, p, span, div, a {
+  -webkit-user-select: text;
+  -khtml-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
+  user-select: text;
 }
 
 h1 {
