@@ -23,13 +23,120 @@ env:
   TERRAFORM_VERSION: "1.10.5"
 
 jobs:
+  detect-changes:
+    name: Detect Meaningful Changes
+    runs-on: ubuntu-latest
+    outputs:
+      has-meaningful-changes: >
+        ${{ steps.changes.outputs.has-meaningful-changes }}
+      has-frontend-changes: ${{ steps.changes.outputs.has-frontend-changes }}
+      has-terraform-changes: ${{ steps.changes.outputs.has-terraform-changes }}
+      has-workflow-changes: ${{ steps.changes.outputs.has-workflow-changes }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Detect changes
+        id: changes
+        run: |
+          # For pull requests, compare against the base branch
+          if [ "${{ github.event_name }}" = "pull_request_target" ]; then
+            BASE_SHA="${{ github.event.pull_request.base.sha }}"
+            HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          else
+            # For pushes, compare against the previous commit
+            BASE_SHA="${{ github.event.before }}"
+            HEAD_SHA="${{ github.sha }}"
+          fi
+
+          echo "Comparing changes from $BASE_SHA to $HEAD_SHA"
+
+          # Check for changes in meaningful directories
+          FRONTEND_CHANGES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | \
+            grep -E "^frontend/" || echo "")
+          TERRAFORM_CHANGES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | \
+            grep -E "^terraform/" || echo "")
+          WORKFLOW_CHANGES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | \
+            grep -E "^\.github/workflows/" || echo "")
+
+          # Set outputs
+          if [ -n "$FRONTEND_CHANGES" ]; then
+            echo "has-frontend-changes=true" >> $GITHUB_OUTPUT
+            echo "Frontend changes detected:"
+            echo "$FRONTEND_CHANGES"
+          else
+            echo "has-frontend-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -n "$TERRAFORM_CHANGES" ]; then
+            echo "has-terraform-changes=true" >> $GITHUB_OUTPUT
+            echo "Terraform changes detected:"
+            echo "$TERRAFORM_CHANGES"
+          else
+            echo "has-terraform-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+          if [ -n "$WORKFLOW_CHANGES" ]; then
+            echo "has-workflow-changes=true" >> $GITHUB_OUTPUT
+            echo "Workflow changes detected:"
+            echo "$WORKFLOW_CHANGES"
+          else
+            echo "has-workflow-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+          # Determine if there are any meaningful changes
+          if [ -n "$FRONTEND_CHANGES" ] || [ -n "$TERRAFORM_CHANGES" ] || \
+             [ -n "$WORKFLOW_CHANGES" ]; then
+            echo "has-meaningful-changes=true" >> $GITHUB_OUTPUT
+            echo "✅ Meaningful changes detected - will proceed with build and deploy"
+          else
+            echo "has-meaningful-changes=false" >> $GITHUB_OUTPUT
+            echo "ℹ️ No meaningful changes detected - skipping build and deploy"
+          fi
+
+  no-changes-notification:
+    name: No Meaningful Changes
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-meaningful-changes == 'false'
+    steps:
+      - name: Log skip reason
+        run: |
+          echo "🔄 Workflow completed successfully with no meaningful changes to deploy."
+          echo "This is the expected 'happy path' when changes don't affect:"
+          echo "  - Frontend application (/frontend)"
+          echo "  - Terraform infrastructure (/terraform)"
+          echo "  - Deployment workflows (/.github/workflows)"
+
+  manual-deploy-skip:
+    name: Manual Deploy Skipped - No Changes
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    if: >
+      needs.detect-changes.outputs.has-meaningful-changes == 'false' &&
+      github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Log manual deploy skip
+        run: |
+          echo "🚫 Manual deployment skipped - no meaningful changes detected."
+          echo "No changes were found in:"
+          echo "  - Frontend application (/frontend)"
+          echo "  - Terraform infrastructure (/terraform)"
+          echo "  - Deployment workflows (/.github/workflows)"
+          echo ""
+          echo "If you need to force a deployment, make a small change to trigger the build."
+
   test:
     name: Test Frontend
     runs-on: ubuntu-latest
+    needs: detect-changes
+    if: needs.detect-changes.outputs.has-meaningful-changes == 'true'
     defaults:
       run:
         working-directory: ./frontend
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -56,11 +163,12 @@ jobs:
   build:
     name: Build Frontend
     runs-on: ubuntu-latest
-    needs: test
+    needs: [detect-changes, test]
+    if: needs.detect-changes.outputs.has-meaningful-changes == 'true'
     defaults:
       run:
         working-directory: ./frontend
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -88,9 +196,11 @@ jobs:
   terraform-plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request_target' || github.event_name == 'push'
-    
+    needs: [detect-changes, build]
+    if: >
+      needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
+      (github.event_name == 'pull_request_target' || github.event_name == 'push')
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -120,15 +230,16 @@ jobs:
       - name: Terraform Plan (Dev)
         working-directory: ./terraform
         run: terraform plan -var-file="env/dev.tfvars" -no-color
-        continue-on-error: true
 
   deploy-dev:
     name: Deploy to Development
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [detect-changes, build]
+    if: >
+      needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
+      github.ref == 'refs/heads/main' && github.event_name == 'push'
     environment: development
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -166,9 +277,11 @@ jobs:
   deploy-prod-plan:
     name: Terraform Plan (Production)
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'workflow_dispatch'
-    
+    needs: [detect-changes, build]
+    if: >
+      needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
+      github.event_name == 'workflow_dispatch'
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -202,12 +315,14 @@ jobs:
   deploy-prod-apply:
     name: Deploy to Production
     runs-on: ubuntu-latest
-    needs: deploy-prod-plan
-    if: github.event_name == 'workflow_dispatch'
-    environment: 
+    needs: [detect-changes, deploy-prod-plan]
+    if: >
+      needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
+      github.event_name == 'workflow_dispatch'
+    environment:
       name: production
       # Set required reviewers in repo settings for approval
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v5
