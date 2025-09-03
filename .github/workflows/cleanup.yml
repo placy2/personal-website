@@ -1,0 +1,237 @@
+name: Infrastructure Cleanup
+
+permissions:
+  contents: read
+  actions: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to cleanup (dev or prod)'
+        required: true
+        type: choice
+        options:
+          - dev
+          - prod
+        default: 'dev'
+      force_cleanup:
+        description: 'Force cleanup regardless of age'
+        required: false
+        type: boolean
+        default: false
+  schedule:
+    # Run daily at 6 AM UTC to check for stale dev environments
+    - cron: '0 6 * * *'
+
+env:
+  TERRAFORM_VERSION: "1.10.5"
+
+jobs:
+  check-last-deploy:
+    name: Check Last Deploy Age
+    runs-on: ubuntu-latest
+    outputs:
+      should-cleanup: ${{ steps.check.outputs.should-cleanup }}
+      environment: ${{ steps.check.outputs.environment }}
+      days-since-deploy: ${{ steps.check.outputs.days-since-deploy }}
+      last-deploy-date: ${{ steps.check.outputs.last-deploy-date }}
+    steps:
+      - name: Check deployment age
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Determine environment
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+            FORCE_CLEANUP="${{ github.event.inputs.force_cleanup }}"
+          else
+            # Scheduled run - only check dev environment
+            ENVIRONMENT="dev"
+            FORCE_CLEANUP="false"
+          fi
+          
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "Checking environment: $ENVIRONMENT"
+          
+          # Force cleanup if requested
+          if [ "$FORCE_CLEANUP" = "true" ]; then
+            echo "should-cleanup=true" >> $GITHUB_OUTPUT
+            echo "days-since-deploy=0" >> $GITHUB_OUTPUT
+            echo "last-deploy-date=force" >> $GITHUB_OUTPUT
+            echo "🔥 Force cleanup requested - skipping age check"
+            exit 0
+          fi
+          
+          # Get the last successful deployment to the environment
+          WORKFLOW_NAME="Build, Test, and Deploy"
+          JOB_NAME="Deploy to Development"
+          if [ "$ENVIRONMENT" = "prod" ]; then
+            JOB_NAME="Deploy to Production"
+          fi
+          
+          echo "Looking for last successful run of job: $JOB_NAME"
+          
+          # Get workflow id for the deploy workflow by name
+          WORKFLOW_ID=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${{ github.repository }}/actions/workflows" \
+            --jq ".workflows[] | select(.name == \"$WORKFLOW_NAME\") | .id")
+          
+          if [ -z "$WORKFLOW_ID" ]; then
+            echo "Could not find workflow with name: $WORKFLOW_NAME"
+            echo "should-cleanup=false" >> $GITHUB_OUTPUT
+            echo "days-since-deploy=unknown" >> $GITHUB_OUTPUT
+            echo "last-deploy-date=never" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Get workflow runs for the deploy workflow using its id
+          LAST_DEPLOY=$(gh api \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "/repos/${{ github.repository }}/actions/workflows/$WORKFLOW_ID/runs" \
+            --jq '.workflow_runs[] | select(.status == "completed" and .conclusion == "success") | .created_at' \
+            | head -1)
+          
+          if [ -z "$LAST_DEPLOY" ]; then
+            echo "No successful deployments found for $ENVIRONMENT"
+            echo "should-cleanup=false" >> $GITHUB_OUTPUT
+            echo "days-since-deploy=unknown" >> $GITHUB_OUTPUT
+            echo "last-deploy-date=never" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "last-deploy-date=$LAST_DEPLOY" >> $GITHUB_OUTPUT
+          echo "Last deployment: $LAST_DEPLOY"
+          
+          # Calculate days since last deploy
+          LAST_DEPLOY_TIMESTAMP=$(date -d "$LAST_DEPLOY" +%s)
+          CURRENT_TIMESTAMP=$(date +%s)
+          SECONDS_DIFF=$((CURRENT_TIMESTAMP - LAST_DEPLOY_TIMESTAMP))
+          DAYS_DIFF=$((SECONDS_DIFF / 86400))
+          
+          echo "days-since-deploy=$DAYS_DIFF" >> $GITHUB_OUTPUT
+          echo "Days since last deploy: $DAYS_DIFF"
+          
+          # Check if cleanup is needed (30+ days for dev, never auto for prod)
+          if [ "$ENVIRONMENT" = "dev" ] && [ "$DAYS_DIFF" -ge 30 ]; then
+            echo "should-cleanup=true" >> $GITHUB_OUTPUT
+            echo "✅ Dev environment is stale ($DAYS_DIFF days old) - scheduling cleanup"
+          elif [ "$ENVIRONMENT" = "prod" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "should-cleanup=false" >> $GITHUB_OUTPUT
+            echo "🛡️ Production environment - automatic cleanup disabled"
+          elif [ "$DAYS_DIFF" -lt 30 ]; then
+            echo "should-cleanup=false" >> $GITHUB_OUTPUT
+            echo "🟢 Environment is fresh ($DAYS_DIFF days old) - no cleanup needed"
+          else
+            echo "should-cleanup=true" >> $GITHUB_OUTPUT
+            echo "✅ Manual cleanup requested for $ENVIRONMENT"
+          fi
+
+  terraform-destroy-plan:
+    name: Terraform Destroy Plan
+    runs-on: ubuntu-latest
+    needs: check-last-deploy
+    if: needs.check-last-deploy.outputs.should-cleanup == 'true'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Destroy Plan
+        working-directory: ./terraform
+        run: |
+          echo "🗂️ Planning destruction of ${{ needs.check-last-deploy.outputs.environment }} environment"
+          echo "📅 Last deploy: ${{ needs.check-last-deploy.outputs.last-deploy-date }}"
+          echo "📊 Days since deploy: ${{ needs.check-last-deploy.outputs.days-since-deploy }}"
+          echo ""
+          terraform plan -destroy -var-file="env/${{ needs.check-last-deploy.outputs.environment }}.tfvars" -no-color
+
+  terraform-destroy:
+    name: Destroy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [check-last-deploy, terraform-destroy-plan]
+    if: needs.check-last-deploy.outputs.should-cleanup == 'true'
+    environment: 
+      name: ${{ needs.check-last-deploy.outputs.environment }}-cleanup
+      # Set required reviewers in repo settings for approval
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Destroy Infrastructure
+        working-directory: ./terraform
+        run: |
+          echo "🔥 Destroying ${{ needs.check-last-deploy.outputs.environment }} environment"
+          echo "📅 Last deploy: ${{ needs.check-last-deploy.outputs.last-deploy-date }}"
+          echo "📊 Days since deploy: ${{ needs.check-last-deploy.outputs.days-since-deploy }}"
+          echo ""
+          terraform destroy -var-file="env/${{ needs.check-last-deploy.outputs.environment }}.tfvars" -auto-approve
+
+      - name: Cleanup Summary
+        run: |
+          echo "✅ Successfully destroyed ${{ needs.check-last-deploy.outputs.environment }} environment"
+          echo ""
+          echo "📊 Cleanup Summary:"
+          echo "  - Environment: ${{ needs.check-last-deploy.outputs.environment }}"
+          echo "  - Last deploy: ${{ needs.check-last-deploy.outputs.last-deploy-date }}"
+          echo "  - Days since deploy: ${{ needs.check-last-deploy.outputs.days-since-deploy }}"
+          echo "  - Trigger: ${{ github.event_name }}"
+          
+  no-cleanup-needed:
+    name: No Cleanup Needed
+    runs-on: ubuntu-latest
+    needs: check-last-deploy
+    if: needs.check-last-deploy.outputs.should-cleanup == 'false'
+    steps:
+      - name: Log skip reason
+        run: |
+          echo "ℹ️ No cleanup needed for ${{ needs.check-last-deploy.outputs.environment }} environment"
+          echo ""
+          echo "📊 Environment Status:"
+          echo "  - Environment: ${{ needs.check-last-deploy.outputs.environment }}"
+          echo "  - Last deploy: ${{ needs.check-last-deploy.outputs.last-deploy-date }}"
+          echo "  - Days since deploy: ${{ needs.check-last-deploy.outputs.days-since-deploy }}"
+          echo "  - Trigger: ${{ github.event_name }}"
+          echo ""
+          if [ "${{ needs.check-last-deploy.outputs.environment }}" = "prod" ] && [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "🛡️ Production environments are protected from automatic cleanup"
+          elif [ "${{ needs.check-last-deploy.outputs.days-since-deploy }}" != "unknown" ] && [ "${{ needs.check-last-deploy.outputs.days-since-deploy }}" -lt 30 ]; then
+            echo "🟢 Environment is still active (cleanup threshold: 30 days)"
+          else
+            echo "📝 No recent deployments found"
+          fi
