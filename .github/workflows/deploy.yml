@@ -95,13 +95,13 @@ jobs:
             echo "has-meaningful-changes=false" >> $GITHUB_OUTPUT            
           fi
 
-      # - name: Display outputs
-      #   run: |
-      #     OUTPUT="${{ steps.changes.outputs.has-meaningful-changes }}"
-      #     echo "Output value: '${OUTPUT}'"
-      #     echo "Output length: ${#OUTPUT}"
-      #     echo "Hex dump: "
-      #     printf '%s' "${OUTPUT}" | od -c
+      - name: Display outputs
+        run: |
+          OUTPUT="${{ steps.changes.outputs.has-meaningful-changes }}"
+          echo "Output value: '${OUTPUT}'"
+          echo "Output length: ${#OUTPUT}"
+          echo "Hex dump: "
+          printf '%s' "${OUTPUT}" | od -c
 
   no-changes-notification:
     name: No Meaningful Changes
