@@ -78,6 +78,7 @@ npm run format:check # Check formatting
 ./scripts/deploy.sh prod plan     # Plan production deployment
 ./scripts/deploy.sh prod apply    # Deploy to production
 ./scripts/teardown.sh dev         # Destroy development infrastructure
+./scripts/smoke-test.sh <url>     # Run smoke tests against deployed site
 ```
 
 ### Environment Configuration
@@ -152,6 +153,27 @@ npm run test:coverage
 Tests are written using Vitest and React Testing Library. Examples can be found in:
 - `src/App.test.tsx`
 - `src/pages/Home.test.tsx`
+
+### Smoke Tests
+Post-deployment smoke tests validate that the deployed site is functional:
+
+```bash
+# Run smoke tests against development
+./scripts/smoke-test.sh http://parkerlacy-dev-hosting.s3-website-us-east-1.amazonaws.com
+
+# Run smoke tests against production
+./scripts/smoke-test.sh https://<cloudfront-domain>.cloudfront.net
+```
+
+The smoke tests verify:
+- HTTP 200 status response
+- Expected content is present (name, key technologies)
+- Valid HTML structure
+- React app container exists
+
+These tests run automatically in the CI/CD pipeline after each deployment.
+
+For more comprehensive end-to-end testing, see the Playwright implementation suggestions in `scripts/smoke-test.sh`.
 
 ## 🚀 Deployment
 
