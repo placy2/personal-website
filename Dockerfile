@@ -1,5 +1,5 @@
 # Multi-stage Dockerfile for React application
-FROM node:24-alpine AS base
+FROM node:25-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
