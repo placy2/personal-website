@@ -88,19 +88,20 @@ jobs:
           # Determine if there are any meaningful changes
           if [ -n "$FRONTEND_CHANGES" ] || [ -n "$TERRAFORM_CHANGES" ] || \
              [ -n "$WORKFLOW_CHANGES" ]; then
-            echo "has-meaningful-changes=true" >> $GITHUB_OUTPUT
             echo "✅ Meaningful changes detected - will proceed with build and deploy"
+            echo "has-meaningful-changes=true" >> $GITHUB_OUTPUT
           else
-            echo "has-meaningful-changes=false" >> $GITHUB_OUTPUT
             echo "ℹ️ No meaningful changes detected - skipping build and deploy"
+            echo "has-meaningful-changes=false" >> $GITHUB_OUTPUT            
           fi
 
       - name: Display outputs
         run: |
-          echo "Output value: '${{ steps.changes.outputs.has-meaningful-changes }}'"
+          OUTPUT="${{ steps.changes.outputs.has-meaningful-changes }}"
+          echo "Output value: '${OUTPUT}'"
           echo "Output length: ${#OUTPUT}"
           echo "Hex dump: "
-          echo "${{ steps.changes.outputs.has-meaningful-changes }}" | od -c
+          printf '%s' "${OUTPUT}" | od -c
 
   no-changes-notification:
     name: No Meaningful Changes
