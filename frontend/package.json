@@ -17,9 +17,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
-    "react-router-dom": "^7.8.2",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1",
+    "react-router-dom": "^7.10.1",
     "react-slick": "^0.31.0",
     "slick-carousel": "^1.8.1"
   },
@@ -29,8 +29,8 @@
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
     "@types/node": "^24.9.1",
-    "@types/react": "^19.1.12",
-    "@types/react-dom": "^19.1.9",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
     "@types/react-slick": "^0.23.13",
     "@vitejs/plugin-react-swc": "^4.2.0",
     "@vitest/coverage-v8": "^4.0.3",
