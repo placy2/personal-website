@@ -208,7 +208,11 @@ docker-compose -f docker-compose.prod.yml up
 
 ## 📄 License
 
-This project is personal and proprietary to Parker Lacy.
+- Code (source): MIT License — see LICENSE (recommended for code, components, scripts).
+- Personal content (résumé text, biography, original images, etc.): All Rights Reserved — see CONTENT_LICENSE.md.
+
+This separation keeps code permissively licensed while preventing reuse of personal content without permission.
+
 
 ---
 
