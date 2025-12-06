@@ -138,7 +138,7 @@ jobs:
     if: needs.check-last-deploy.outputs.should-cleanup == 'true'
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5
@@ -175,7 +175,7 @@ jobs:
       # Set required reviewers in repo settings for approval
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v5
