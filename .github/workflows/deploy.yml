@@ -281,6 +281,19 @@ jobs:
         working-directory: ./terraform
         run: terraform output
 
+      - name: Get S3 URL for smoke tests
+        id: get-url
+        working-directory: ./terraform
+        run: |
+          S3_URL=$(terraform output -raw s3_url)
+          echo "s3_url=$S3_URL" >> $GITHUB_OUTPUT
+          echo "Testing URL: $S3_URL"
+
+      - name: Run smoke tests
+        run: |
+          chmod +x ./scripts/smoke-test.sh
+          ./scripts/smoke-test.sh "${{ steps.get-url.outputs.s3_url }}"
+
   deploy-prod-plan:
     name: Terraform Plan (Production)
     runs-on: ubuntu-latest
@@ -363,3 +376,16 @@ jobs:
       - name: Output URLs
         working-directory: ./terraform
         run: terraform output
+
+      - name: Get CloudFront URL for smoke tests
+        id: get-url
+        working-directory: ./terraform
+        run: |
+          CLOUDFRONT_URL=$(terraform output -raw cloudfront_url)
+          echo "cloudfront_url=$CLOUDFRONT_URL" >> $GITHUB_OUTPUT
+          echo "Testing URL: $CLOUDFRONT_URL"
+
+      - name: Run smoke tests
+        run: |
+          chmod +x ./scripts/smoke-test.sh
+          ./scripts/smoke-test.sh "${{ steps.get-url.outputs.cloudfront_url }}"
