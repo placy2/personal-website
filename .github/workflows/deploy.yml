@@ -27,8 +27,7 @@ jobs:
     name: Detect Meaningful Changes
     runs-on: ubuntu-latest
     outputs:
-      has-meaningful-changes: >
-        ${{ steps.changes.outputs.has-meaningful-changes }}
+      has-meaningful-changes: ${{ steps.changes.outputs.has-meaningful-changes }}
       has-frontend-changes: ${{ steps.changes.outputs.has-frontend-changes }}
       has-terraform-changes: ${{ steps.changes.outputs.has-terraform-changes }}
       has-workflow-changes: ${{ steps.changes.outputs.has-workflow-changes }}
