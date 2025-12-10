@@ -73,7 +73,7 @@ done
 
 # Test 4: Check that HTML structure looks valid
 echo "Test 4: Checking HTML structure..."
-if echo "$CONTENT" | grep -q "<!DOCTYPE html>" && echo "$CONTENT" | grep -q "</html>"; then
+if echo "$CONTENT" | grep -q "<!doctype html>" && echo "$CONTENT" | grep -q "</html>"; then
   echo -e "${GREEN}✓ HTML structure appears valid${NC}"
 else
   echo -e "${RED}✗ HTML structure appears invalid${NC}"
