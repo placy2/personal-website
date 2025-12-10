@@ -20,7 +20,7 @@ on:
 
 env:
   NODE_VERSION: "22"
-  TERRAFORM_VERSION: "1.10.5"
+  TERRAFORM_VERSION: "1.13.5"
 
 jobs:
   detect-changes:
