@@ -17,6 +17,17 @@ on:
       - "terraform/**"
       - ".github/workflows/**"
   workflow_dispatch:
+    inputs:
+      deploy_to_dev:
+        description: 'Deploy to Development'
+        required: false
+        type: boolean
+        default: false
+      deploy_to_prod:
+        description: 'Deploy to Production'
+        required: false
+        type: boolean
+        default: false
 
 env:
   NODE_VERSION: "22"
@@ -251,7 +262,10 @@ jobs:
     needs: [detect-changes, build]
     if: >
       needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
-      github.ref == 'refs/heads/main' && github.event_name == 'push'
+      (
+        (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_to_dev == true)
+      )
     environment: development
 
     steps:
@@ -306,10 +320,15 @@ jobs:
   deploy-prod-plan:
     name: Terraform Plan (Production)
     runs-on: ubuntu-latest
-    needs: [detect-changes, build]
+    needs: [detect-changes, build, deploy-dev]
     if: >
+      always() &&
       needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
-      github.event_name == 'workflow_dispatch'
+      (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_to_prod == true)
+      )
 
     steps:
       - name: Checkout
@@ -347,7 +366,10 @@ jobs:
     needs: [detect-changes, deploy-prod-plan]
     if: >
       needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
-      github.event_name == 'workflow_dispatch'
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_to_prod == true)
+      )
     environment:
       name: production
       # Set required reviewers in repo settings for approval
