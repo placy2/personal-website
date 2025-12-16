@@ -5,11 +5,6 @@ resource "aws_s3_bucket" "bucket" {
   tags   = local.common_tags
 }
 
-resource "aws_s3_bucket_acl" "bucket_acl" {
-  bucket = aws_s3_bucket.bucket.id
-  acl    = "private"
-}
-
 resource aws_s3_bucket_server_side_encryption_configuration "bucket_encryption" {
   bucket = aws_s3_bucket.bucket.id
 
