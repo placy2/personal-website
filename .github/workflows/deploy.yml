@@ -52,6 +52,16 @@ jobs:
       - name: Detect changes
         id: changes
         run: |
+          # For manual workflow_dispatch, always consider there are meaningful changes
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "🔧 Manual workflow dispatch - treating as meaningful changes"
+            echo "has-frontend-changes=true" >> $GITHUB_OUTPUT
+            echo "has-terraform-changes=true" >> $GITHUB_OUTPUT
+            echo "has-workflow-changes=false" >> $GITHUB_OUTPUT
+            echo "has-meaningful-changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           # For pull requests, compare against the base branch
           if [ "${{ github.event_name }}" = "pull_request_target" ]; then
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
