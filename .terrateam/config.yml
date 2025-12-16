@@ -1,0 +1,23 @@
+when_modified:
+  autoplan: false
+dirs:
+  terraform:
+    create_and_select_workspace: false
+    tags: [personal-website]
+    workspaces:
+      development:
+        tags: [dev]
+      production:
+        tags: [prod]
+workflows:
+  - tag_query: qa
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=env/dev.tfvars"]
+  - tag_query: production
+    plan:
+      - type: init
+      - type: plan
+        extra_args: ["-var-file=env/prod.tfvars"]
+        
