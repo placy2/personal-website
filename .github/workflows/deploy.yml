@@ -17,6 +17,17 @@ on:
       - "terraform/**"
       - ".github/workflows/**"
   workflow_dispatch:
+    inputs:
+      deploy_to_dev:
+        description: 'Deploy to Development'
+        required: false
+        type: boolean
+        default: false
+      deploy_to_prod:
+        description: 'Deploy to Production'
+        required: false
+        type: boolean
+        default: false
 
 env:
   NODE_VERSION: "22"
@@ -41,6 +52,16 @@ jobs:
       - name: Detect changes
         id: changes
         run: |
+          # For manual workflow_dispatch, always consider there are meaningful changes
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "🔧 Manual workflow dispatch - treating as meaningful changes"
+            echo "has-frontend-changes=true" >> $GITHUB_OUTPUT
+            echo "has-terraform-changes=true" >> $GITHUB_OUTPUT
+            echo "has-workflow-changes=false" >> $GITHUB_OUTPUT
+            echo "has-meaningful-changes=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
           # For pull requests, compare against the base branch
           if [ "${{ github.event_name }}" = "pull_request_target" ]; then
             BASE_SHA="${{ github.event.pull_request.base.sha }}"
@@ -117,24 +138,6 @@ jobs:
           echo "  - Frontend application (/frontend)"
           echo "  - Terraform infrastructure (/terraform)"
           echo "  - Deployment workflows (/.github/workflows)"
-
-  manual-deploy-skip:
-    name: Manual Deploy Skipped - No Changes
-    runs-on: ubuntu-latest
-    needs: detect-changes
-    if: >
-      needs.detect-changes.outputs.has-meaningful-changes == 'false' &&
-      github.event_name == 'workflow_dispatch'
-    steps:
-      - name: Log manual deploy skip
-        run: |
-          echo "🚫 Manual deployment skipped - no meaningful changes detected."
-          echo "No changes were found in:"
-          echo "  - Frontend application (/frontend)"
-          echo "  - Terraform infrastructure (/terraform)"
-          echo "  - Deployment workflows (/.github/workflows)"
-          echo ""
-          echo "If you need to force a deployment, make a small change to trigger the build."
 
   test:
     name: Test Frontend
@@ -251,7 +254,10 @@ jobs:
     needs: [detect-changes, build]
     if: >
       needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
-      github.ref == 'refs/heads/main' && github.event_name == 'push'
+      (
+        (github.ref == 'refs/heads/main' && github.event_name == 'push') ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_to_dev == true)
+      )
     environment: development
 
     steps:
@@ -306,10 +312,15 @@ jobs:
   deploy-prod-plan:
     name: Terraform Plan (Production)
     runs-on: ubuntu-latest
-    needs: [detect-changes, build]
+    needs: [detect-changes, build, deploy-dev]
     if: >
+      !cancelled() &&
       needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
-      github.event_name == 'workflow_dispatch'
+      (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') &&
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_to_prod == true)
+      )
 
     steps:
       - name: Checkout
@@ -347,7 +358,10 @@ jobs:
     needs: [detect-changes, deploy-prod-plan]
     if: >
       needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
-      github.event_name == 'workflow_dispatch'
+      (
+        (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_to_prod == true)
+      )
     environment:
       name: production
       # Set required reviewers in repo settings for approval
