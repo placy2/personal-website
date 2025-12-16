@@ -53,6 +53,7 @@ resource "aws_s3_object" "file" {
 }
 
 resource "aws_s3_bucket_website_configuration" "hosting" {
+  depends_on = [ aws_s3_bucket.bucket ]
   bucket = aws_s3_bucket.bucket.id
 
   index_document {
