@@ -314,7 +314,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [detect-changes, build, deploy-dev]
     if: >
-      always() &&
+      !cancelled() &&
       needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
       (needs.deploy-dev.result == 'success' || needs.deploy-dev.result == 'skipped') &&
       (
