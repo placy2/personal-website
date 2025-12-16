@@ -242,11 +242,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -var-file="env/dev.tfvars" -backend-config="backend/dev.backend" --reconfigure
 
       - name: Terraform Plan (Dev)
         working-directory: ./terraform
-        run: terraform plan -var-file="env/dev.tfvars" -no-color
+        run: terraform plan -var-file="env/dev.tfvars" -backend-config="backend/dev.backend" 
 
   deploy-dev:
     name: Deploy to Development
@@ -286,7 +286,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -var-file="env/dev.tfvars" -backend-config="backend/dev.backend" --reconfigure
 
       - name: Deploy to Development
         working-directory: ./terraform
@@ -346,11 +346,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -var-file="env/prod.tfvars" -backend-config="backend/prod.backend" --reconfigure
 
       - name: Terraform Plan (Prod)
         working-directory: ./terraform
-        run: terraform plan -var-file="env/prod.tfvars" -no-color
+        run: terraform plan -var-file="env/prod.tfvars" -backend-config="backend/prod.backend"
 
   deploy-prod-apply:
     name: Deploy to Production
@@ -390,11 +390,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -var-file="env/prod.tfvars" -backend-config="backend/prod.backend" --reconfigure
 
       - name: Deploy to Production
         working-directory: ./terraform
-        run: terraform apply -var-file="env/prod.tfvars" -auto-approve
+        run: terraform apply -var-file="env/prod.tfvars" -backend-config="backend/prod.backend" -auto-approve
 
       - name: Output URLs
         working-directory: ./terraform

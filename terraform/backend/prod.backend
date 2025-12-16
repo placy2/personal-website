@@ -1,0 +1,3 @@
+bucket = "parker-terraform-backends"
+key    = "terraform/personal-website/prod/state"
+region = "us-east-1"
