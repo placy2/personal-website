@@ -10,7 +10,7 @@ dirs:
       production:
         tags: [prod]
 workflows:
-  - tag_query: qa
+  - tag_query: dev
     plan:
       - type: init
       - type: plan
