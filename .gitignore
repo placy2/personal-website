@@ -151,3 +151,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+
+# Ignore random markdowns locally
+*/scratchpad.md
