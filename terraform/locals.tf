@@ -5,4 +5,5 @@ locals {
     ".js"   = "text/javascript",
     ".jpeg" = "image/jpeg",
   }
+  domain_name = "parkerlacy.com"
 }

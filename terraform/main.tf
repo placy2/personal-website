@@ -1,7 +1,10 @@
 # https://pfertyk.me/2023/01/creating-a-static-website-with-terraform-and-aws/
 
+# https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/getting-started-cloudfront-overview.html
+
+
 resource "aws_s3_bucket" "bucket" {
-  bucket = "parkerlacy-website-hosting-bucket"
+  bucket = local.domain_name
 }
 
 resource "aws_s3_bucket_public_access_block" "bucket_access_block" {
@@ -91,5 +94,30 @@ resource "aws_cloudfront_distribution" "distribution" {
 
 # Managing hosted zone for the domain
 resource "aws_route53_zone" "zone" {
-  name = "parkerlacy.com"
+  name = local.domain_name
+}
+
+# Managing DNS records for the domain & subdomain
+resource "aws_route53_record" "root" {
+  zone_id = aws_route53_zone.zone.zone_id
+  name    = local.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.distribution.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_route53_record" "www" {
+  zone_id = aws_route53_zone.zone.zone_id
+  name    = "www.${local.domain_name}"
+  type    = "CNAME"
+
+  alias {
+    name                   = aws_cloudfront_distribution.distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.distribution.hosted_zone_id
+    evaluate_target_health = false
+  }
 }
