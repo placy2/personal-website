@@ -153,4 +153,4 @@ override.tf.json
 terraform.rc
 
 # Ignore random markdowns locally
-*/scratchpad.md
+scratchpad.md
