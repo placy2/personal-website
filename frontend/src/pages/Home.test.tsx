@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import Home from '../pages/Home';
+import { TECHNOLOGIES } from '../constants';
 
 describe('Home Component', () => {
   it('renders Parker Lacy heading', () => {
@@ -13,11 +14,11 @@ describe('Home Component', () => {
     expect(screen.getByText(/cloud engineer based in the denver area/i)).toBeInTheDocument();
   });
 
-  it('shows technology icons', () => {
+  it('shows an icon for every technology', () => {
     render(<Home />);
-    expect(screen.getByAltText('Kubernetes')).toBeInTheDocument();
-    expect(screen.getByAltText('Terraform')).toBeInTheDocument();
-    expect(screen.getByAltText('AWS')).toBeInTheDocument();
+    for (const tech of TECHNOLOGIES) {
+      expect(screen.getByAltText(tech.name)).toBeInTheDocument();
+    }
   });
 
   it('has links to external resources', () => {

@@ -1,29 +1,32 @@
+.project-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
 .project-card {
-  background: var(--theme-black);
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px 0px;
-  text-align: center;
-  margin: 10px 0px; /* Adjusted margin to create gaps */
+  display: flex;
+  flex-direction: column;
+  background-color: var(--theme-surface);
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius);
+  padding: var(--space-4);
+  transition: border-color 200ms;
+}
+
+.project-card:hover {
+  border-color: var(--theme-purple);
 }
 
 .project-card h3 {
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-2);
 }
 
 .project-card p {
-  margin: 0 0 20px;
-}
-
-.project-card a {
-  color: #007bff;
-  text-decoration: none;
-}
-
-.project-card a:hover {
-  text-decoration: underline;
-}
-
-.slick-slider {
-  padding: 0 30px; /* Add padding to the slider container */
+  flex: 1;
+  margin: 0 0 var(--space-3);
+  color: var(--theme-muted);
 }

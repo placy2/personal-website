@@ -10,12 +10,15 @@ describe('App Component', () => {
 
   it('displays Parker Lacy name', () => {
     render(<App />);
-    expect(screen.getByText('Parker Lacy')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Parker Lacy' })).toBeInTheDocument();
   });
 
-  it('has navigation menu', () => {
+  it('has navigation links for every page', () => {
     render(<App />);
     const nav = screen.getByRole('navigation');
     expect(nav).toBeInTheDocument();
+    for (const label of ['Home', 'About', 'Projects', 'Resume']) {
+      expect(screen.getByRole('link', { name: label })).toBeInTheDocument();
+    }
   });
 });

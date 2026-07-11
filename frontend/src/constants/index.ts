@@ -1,3 +1,9 @@
+import k8sIcon from '../assets/kubernetes_logo.png';
+import tfIcon from '../assets/terraform_logo.png';
+import awsIcon from '../assets/aws_logo.png';
+import adoIcon from '../assets/ado_logo.webp';
+import helmIcon from '../assets/helm_logo.png';
+
 // Application constants
 export const APP_CONFIG = {
   name: 'Parker Lacy Portfolio',
@@ -38,26 +44,26 @@ export const TECHNOLOGIES = [
   {
     name: 'Kubernetes',
     url: EXTERNAL_LINKS.KUBERNETES,
-    icon: 'kubernetes_logo.png',
+    icon: k8sIcon,
   },
   {
     name: 'Terraform',
     url: EXTERNAL_LINKS.TERRAFORM,
-    icon: 'terraform_logo.png',
+    icon: tfIcon,
   },
   {
     name: 'AWS',
     url: EXTERNAL_LINKS.AWS,
-    icon: 'aws_logo.png',
+    icon: awsIcon,
   },
   {
     name: 'Azure DevOps',
     url: EXTERNAL_LINKS.AZURE_DEVOPS,
-    icon: 'ado_logo.webp',
+    icon: adoIcon,
   },
   {
     name: 'Helm',
     url: EXTERNAL_LINKS.HELM,
-    icon: 'helm_logo.png',
+    icon: helmIcon,
   },
 ] as const;
