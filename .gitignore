@@ -154,3 +154,7 @@ terraform.rc
 
 # Ignore random markdowns locally
 scratchpad.md
+fix_dependabot.md
+
+# Ignore claude directory
+.claude/*
