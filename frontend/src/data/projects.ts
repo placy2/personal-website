@@ -13,7 +13,8 @@ export const PROJECTS: Project[] = [
   },
   {
     name: 'Big Data/ML Course Final Project',
-    description: 'Analysis of a large opioid distribution dataset from my undergrad coursework (2019).',
+    description:
+      'Analysis of a large opioid distribution dataset from my undergrad coursework (2019).',
     url: 'https://github.com/placy2/US-opioid-data-analysis',
   },
   {

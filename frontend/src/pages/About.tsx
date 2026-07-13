@@ -14,8 +14,8 @@ const About: React.FC = () => {
 
       <h2>Career</h2>
       <p>
-        After school, I started in tech consulting. I contributed across the full stack in
-        different web apps and learned how large-scale SDLC works in the real world.
+        After school, I started in tech consulting. I contributed across the full stack in different
+        web apps and learned how large-scale SDLC works in the real world.
       </p>
       <p>
         I became passionate about CI/CD and reliable releases, which led me to switch gears to a
