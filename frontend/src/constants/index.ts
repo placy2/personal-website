@@ -3,13 +3,17 @@ import tfIcon from '../assets/terraform_logo.png';
 import awsIcon from '../assets/aws_logo.png';
 import adoIcon from '../assets/ado_logo.webp';
 import helmIcon from '../assets/helm_logo.png';
+import argoIcon from '../assets/argocd_logo.webp';
 
 // Application constants
 export const APP_CONFIG = {
   name: 'Parker Lacy Portfolio',
   title: 'Parker Lacy - Cloud/DevOps',
-  description:
-    'Cloud Engineer based in the Denver area. Passionate about technology, music, and family.',
+  description: [
+    'Senior Cloud Engineer based in the Denver area. Proud dad, husband, and technology enthusiast.',
+    'I enjoy supporting development teams in building and maintaining cloud infrastructure, CI/CD pipelines, and automation solutions.',
+    'Outside of work, I can often be found spending time with family, out on the disc golf course, or enjoying a good videogame.',
+  ],
   author: 'Parker Lacy',
   url: 'https://parkerlacy.com',
 } as const;
@@ -30,6 +34,7 @@ export const EXTERNAL_LINKS = {
   AWS: 'https://aws.amazon.com/',
   AZURE_DEVOPS: 'https://azure.microsoft.com/en-us/products/devops/pipelines/',
   HELM: 'https://helm.sh/',
+  ARGOCD: 'https://argo-cd.readthedocs.io/en/stable/',
 } as const;
 
 // Breakpoints for responsive design
@@ -65,5 +70,10 @@ export const TECHNOLOGIES = [
     name: 'Helm',
     url: EXTERNAL_LINKS.HELM,
     icon: helmIcon,
+  },
+  {
+    name: 'ArgoCD',
+    url: EXTERNAL_LINKS.ARGOCD,
+    icon: argoIcon,
   },
 ] as const;

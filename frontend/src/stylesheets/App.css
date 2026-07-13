@@ -50,6 +50,20 @@
   color: var(--theme-muted);
 }
 
+.home-page-text p {
+  margin-bottom: var(--space-3);
+}
+
+.home-page-text p:last-child {
+  margin-bottom: 0;
+}
+
+.home-divider {
+  margin: var(--space-4) 0;
+  border: none;
+  border-top: 1px solid var(--theme-border);
+}
+
 .icon-container {
   display: flex;
   flex-wrap: wrap;

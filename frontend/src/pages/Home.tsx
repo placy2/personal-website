@@ -9,9 +9,13 @@ const Home: React.FC = () => {
         <img src={headshotPhoto} className="headshot" alt="Recent headshot of Parker (2023)" />
       </a>
       <h1>Parker Lacy</h1>
-      <p className="home-page-text">
-        {APP_CONFIG.description} Here are a few of my favorite tools and technologies:
-      </p>
+      <div className="home-page-text">
+        {APP_CONFIG.description.map((paragraph, index) => (
+          <p key={index}>{paragraph}</p>
+        ))}
+        <hr className="home-divider" />
+        <p>Here are a few of my favorite tools and technologies I use regularly:</p>
+      </div>
       <div className="icon-container">
         {TECHNOLOGIES.map(tech => (
           <a
