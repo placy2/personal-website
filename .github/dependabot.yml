@@ -4,6 +4,9 @@ updates:
   - package-ecosystem: "npm"
     directory: "/frontend"
     groups:
+      npm-security:
+        applies-to: security-updates
+        patterns: ["*"]
       prod-deps:
         dependency-type: production
       dev-deps:
@@ -26,25 +29,14 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
+    groups:
+      actions-all:
+        patterns: ["*"]
     open-pull-requests-limit: 5
     reviewers:
       - "placy2"
     commit-message:
       prefix: "chore(actions):"
-      include: "scope"
-
-  # Docker dependencies (if using base images that get updates)
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 3
-    reviewers:
-      - "placy2"
-    commit-message:
-      prefix: "chore(docker):"
       include: "scope"
 
   # Terraform
