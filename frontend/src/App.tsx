@@ -12,14 +12,14 @@ const App: React.FC = () => {
   return (
     <Router>
       <MenuBar />
-      <div className="main-content">
+      <main className="main-content">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/about" element={<About />} />
           <Route path="/projects" element={<Projects />} />
           <Route path="/resume" element={<Resume />} />
         </Routes>
-      </div>
+      </main>
       <Footer />
     </Router>
   );

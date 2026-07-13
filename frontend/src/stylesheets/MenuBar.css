@@ -1,10 +1,25 @@
 nav {
-  background-color: var(--theme-purple);
-  overflow: hidden;
-  position: fixed; /* Fix the MenuBar at the top */
+  position: sticky;
   top: 0;
-  width: 100%; /* Ensure it spans the full width */
-  z-index: 1000; /* Ensure it stays on top of other content */
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--theme-surface);
+  border-bottom: 1px solid var(--theme-border);
+  padding: 0 var(--space-4);
+}
+
+.wordmark {
+  color: var(--theme-white);
+  font-weight: 700;
+  font-size: var(--text-lg);
+  padding: var(--space-2) 0;
+}
+
+.wordmark:hover {
+  color: var(--theme-light-purple);
+  text-decoration: none;
 }
 
 nav ul {
@@ -12,61 +27,65 @@ nav ul {
   margin: 0;
   padding: 0;
   display: flex;
-}
-
-nav ul li {
-  padding: 14px 20px;
+  gap: var(--space-1);
 }
 
 nav ul a {
-  color: var(--theme-white);
-  text-align: center;
+  display: block;
+  padding: var(--space-3) var(--space-3);
+  color: var(--theme-muted);
   text-decoration: none;
 }
 
 nav ul a:hover {
-  color: black;
-  background-color: var(--theme-dark-purple);
+  color: var(--theme-white);
+  text-decoration: none;
 }
 
-.active {
-  font-weight: bold;
-  text-shadow: 3px 3px 3px rgba(0, 0, 0, 0.2);
-  background-color: var(--theme-dark-purple);
+nav ul a.active {
+  color: var(--theme-white);
+  font-weight: 600;
+  box-shadow: inset 0 -3px 0 var(--theme-purple);
 }
 
 /* Toggle button for small screens */
 .menu-toggle {
   display: none;
-  background-color: var(--theme-purple);
+  background: none;
   color: var(--theme-white);
   border: none;
-  padding: 14px 20px;
+  padding: var(--space-2);
   cursor: pointer;
-  font-size: 18px;
+  font-size: 1.5rem;
+  line-height: 1;
 }
 
 /* Media Queries */
 @media (max-width: 768px) {
-  nav ul {
-    flex-direction: column; /* Stack items vertically */
-    align-items: center; /* Center items */
-    display: none; /* Hide the menu items by default */
-  }
-
-  nav ul.show {
-    display: flex; /* Show the menu items when toggled */
+  nav {
+    flex-wrap: wrap;
   }
 
   .menu-toggle {
-    display: block; /* Show the toggle button */
+    display: block;
   }
 
-  nav ul li {
-    padding: 10px 0; /* Reduce padding */
+  nav ul {
+    display: none;
+    flex-direction: column;
+    width: 100%;
+    padding-bottom: var(--space-2);
   }
 
-  nav {
-    padding: 10px 0; /* Add padding to the nav */
+  nav ul.show {
+    display: flex;
+  }
+
+  nav ul a {
+    padding: var(--space-2) var(--space-2);
+  }
+
+  nav ul a.active {
+    box-shadow: inset 3px 0 0 var(--theme-purple);
   }
 }
