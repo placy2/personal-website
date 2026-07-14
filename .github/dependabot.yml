@@ -21,6 +21,21 @@ updates:
     commit-message:
       prefix: "chore(deps):"
       include: "scope"
+    ignore:
+      # eslint-plugin-react has no release supporting eslint v10's peer range
+      # (peerDependencies caps at ^9.7); this has been a known, documented gap
+      # since February. Remove this ignore once eslint-plugin-react ships a
+      # release with eslint v10 in its peerDependencies.
+      - dependency-name: "eslint"
+        versions: [">=10.0.0"]
+      - dependency-name: "@eslint/js"
+        versions: [">=10.0.0"]
+      # typescript-eslint has no release supporting typescript v7's peer range
+      # (peerDependencies caps at <6.1.0). Remove this ignore once
+      # typescript-eslint ships a release with typescript v7 in its
+      # peerDependencies.
+      - dependency-name: "typescript"
+        versions: [">=6.1.0"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"

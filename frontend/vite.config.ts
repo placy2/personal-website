@@ -13,12 +13,16 @@ export default defineConfig(({ mode }) => {
     // Build optimizations
     build: {
       target: 'esnext',
-      minify: 'esbuild',
+      minify: 'oxc',
       rollupOptions: {
         output: {
-          manualChunks: {
-            vendor: ['react', 'react-dom'],
-            router: ['react-router-dom'],
+          manualChunks: id => {
+            if (id.includes('node_modules/react-router-dom')) {
+              return 'router';
+            }
+            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+              return 'vendor';
+            }
           },
         },
       },
