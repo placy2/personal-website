@@ -1,0 +1,94 @@
+name: Terraform Plan
+
+# The only PR check that needs cloud credentials, isolated so frontend/npm/
+# Actions PRs never run a secret-bearing job. Plain `pull_request`, scoped to
+# terraform changes only.
+#
+# NOTE: `pull_request` runs triggered by Dependabot use *Dependabot secrets*,
+# not repo secrets — duplicate AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY into
+# Settings → Secrets and variables → Dependabot for Dependabot terraform PRs.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "terraform/**"
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+  TERRAFORM_VERSION: "1.13.5"
+
+jobs:
+  terraform-plan:
+    name: Terraform Plan (Dev)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "./frontend/package-lock.json"
+
+      # terraform/main.tf enumerates ../frontend/dist via fileset(), so the
+      # frontend must be built for the plan to reflect the real S3 object set.
+      - name: Build frontend
+        working-directory: ./frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v6
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init
+        working-directory: ./terraform
+        run: terraform init
+
+      - name: Terraform Plan (Dev)
+        working-directory: ./terraform
+        run: |
+          set -o pipefail
+          terraform plan -var-file="env/dev.tfvars" -no-color 2>&1 | tee plan.txt
+
+      - name: Write plan summary
+        if: always()
+        working-directory: ./terraform
+        run: |
+          if [ ! -f plan.txt ]; then
+            echo "## Terraform Plan (dev)" >> "$GITHUB_STEP_SUMMARY"
+            echo "No plan output produced (a step before the plan failed)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "## Terraform Plan (dev)"
+            echo
+            # Headline: the resource-count line, or the no-changes/error line
+            grep -E '^(Plan:|No changes\.|Error:)' plan.txt | head -1 \
+              || echo "⚠️ Plan did not produce a summary line (see full output below)."
+            echo
+            echo "<details><summary>Full plan output</summary>"
+            echo
+            echo '```'
+            # Keep the summary under GitHub's 1 MiB step-summary limit
+            head -c 900000 plan.txt
+            echo '```'
+            echo
+            echo "</details>"
+          } >> "$GITHUB_STEP_SUMMARY"

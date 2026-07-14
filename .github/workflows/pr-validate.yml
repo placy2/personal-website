@@ -1,0 +1,51 @@
+name: PR Validate
+
+# Runs on plain `pull_request` (NOT `pull_request_target`): no repo secrets are
+# in scope, and the workflow definition comes from the PR branch, so Actions
+# bump PRs are actually exercised pre-merge.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "frontend/**"
+
+permissions:
+  contents: read
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  frontend-checks:
+    name: Frontend Checks
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: "./frontend/package-lock.json"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run linting
+        run: npm run lint
+
+      - name: Run tests
+        run: npm run test:run
+
+      - name: Check formatting
+        run: npm run format:check
+
+      - name: Build project
+        run: npm run build
