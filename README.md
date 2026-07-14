@@ -81,6 +81,9 @@ npm run format:check # Check formatting
 ./scripts/smoke-test.sh <url>     # Run smoke tests against deployed site
 ```
 
+See [`scripts/README.md`](scripts/README.md) for full usage details, expected environment/AWS
+setup, and troubleshooting tips for each script.
+
 ### Environment Configuration
 
 Copy `.env.example` to `.env.local` and customize:

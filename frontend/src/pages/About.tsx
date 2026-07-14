@@ -50,7 +50,11 @@ const About: React.FC = () => {
         After getting a chance to dip my toes into pipeline design & development, I became
         passionate about CI/CD, reliable releases, and DevOps. This led me to switch gears to a
         Cloud Engineer role. I now work day-to-day enabling developer teams and working towards
-        safer, faster, & simpler production releases.
+        safer, faster, & simpler production releases. I currently work at{' '}
+        <a href="https://triumph.io" target="_blank" rel="noopener noreferrer">
+          Triumph
+        </a>
+        .
       </p>
 
       <h2>Looking Forward</h2>
