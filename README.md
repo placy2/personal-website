@@ -122,17 +122,17 @@ cp .env.example .env.local
 ```bash
 cd terraform
 
-# Initialize
-terraform init
+# Initialize with the state key for the target environment (dev or prod)
+terraform init -reconfigure -backend-config=env/dev.s3.tfbackend
 
 # Plan with environment-specific variables
-terraform plan -var-file="dev.tfvars"
+terraform plan -var-file="env/dev.tfvars"
 
 # Apply changes
-terraform apply -var-file="dev.tfvars"
+terraform apply -var-file="env/dev.tfvars"
 
 # Destroy infrastructure
-terraform destroy -var-file="dev.tfvars"
+terraform destroy -var-file="env/dev.tfvars"
 ```
 
 ## 🔧 Testing

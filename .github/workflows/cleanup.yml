@@ -154,7 +154,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -backend-config="env/${{ needs.check-last-deploy.outputs.environment }}.s3.tfbackend"
 
       - name: Terraform Destroy Plan
         working-directory: ./terraform
@@ -191,7 +191,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -backend-config="env/${{ needs.check-last-deploy.outputs.environment }}.s3.tfbackend"
 
       - name: Destroy Infrastructure
         working-directory: ./terraform

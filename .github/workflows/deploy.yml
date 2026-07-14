@@ -223,7 +223,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -backend-config=env/dev.s3.tfbackend
 
       - name: Terraform Plan (Dev)
         working-directory: ./terraform
@@ -265,7 +265,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -backend-config=env/dev.s3.tfbackend
 
       - name: Deploy to Development
         working-directory: ./terraform
@@ -325,7 +325,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -backend-config=env/prod.s3.tfbackend
 
       - name: Terraform Plan (Prod)
         working-directory: ./terraform
@@ -369,7 +369,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: terraform init -backend-config=env/prod.s3.tfbackend
 
       - name: Deploy to Production
         working-directory: ./terraform
