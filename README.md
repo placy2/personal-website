@@ -207,7 +207,7 @@ cd frontend && npm run build
 - **Prettier**: Consistent code formatting
 - **TypeScript**: Type safety and better development experience
 - **Testing**: Comprehensive test coverage with Vitest
-- **Pre-commit hooks**: Planned for future implementation
+- **Pre-commit hooks**: Husky + lint-staged run ESLint and Prettier on staged files before each commit (activated automatically by `npm install` in `frontend/`)
 
 ## 📦 Docker
 
