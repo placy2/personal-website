@@ -156,6 +156,7 @@ terraform.rc
 scratchpad.md
 fix_dependabot.md
 fix_crawlability.md
+prod_launch_plan.md
 
 # Ignore claude directory
 .claude/*
