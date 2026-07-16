@@ -22,3 +22,13 @@ output "environment" {
   description = "Environment name"
   value       = var.environment
 }
+
+output "nameservers" {
+  description = "Route53 zone nameservers for the domain"
+  value       = var.environment == "prod" ? aws_route53_zone.zone[0].name_servers : null
+}
+
+output "cloudfront_distribution_id" {
+  description = "Distribution ID needed for cache invalidation in GH workflow"
+  value       = var.enable_cloudfront ? aws_cloudfront_distribution.distribution[0].id : null
+}
