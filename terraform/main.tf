@@ -5,7 +5,7 @@ resource "aws_s3_bucket" "bucket" {
   tags   = local.common_tags
 }
 
-resource aws_s3_bucket_server_side_encryption_configuration "bucket_encryption" {
+resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_encryption" {
   bucket = aws_s3_bucket.bucket.id
 
   rule {
@@ -49,6 +49,10 @@ resource "aws_s3_object" "file" {
   content_type = lookup(local.content_types, regex("\\.[^.]+$", each.value), "application/octet-stream")
   source_hash  = filemd5(each.value)
 
+  cache_control = endswith(each.value, ".html") ? "no-cache" : (
+    strcontains(each.value, "/assets/") ? "public, max-age=31536000, immutable"
+    : "public, max-age=86400"
+  )
   tags = local.common_tags
 }
 
@@ -64,6 +68,10 @@ resource "aws_s3_bucket_website_configuration" "hosting" {
   }
 }
 
+data "aws_cloudfront_response_headers_policy" "security_headers" {
+  name = "Managed-SecurityHeadersPolicy"
+}
+
 # CloudFront distribution - optional for cost savings
 resource "aws_cloudfront_distribution" "distribution" {
   count = var.enable_cloudfront ? 1 : 0
@@ -71,6 +79,13 @@ resource "aws_cloudfront_distribution" "distribution" {
   enabled         = true
   is_ipv6_enabled = true
   comment         = "${var.environment} - ${var.domain_name}"
+
+  custom_error_response {
+    error_code            = 404
+    response_code         = 200
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 60
+  }
 
   origin {
     domain_name = aws_s3_bucket_website_configuration.hosting.website_endpoint
@@ -88,8 +103,12 @@ resource "aws_cloudfront_distribution" "distribution" {
     }
   }
 
+  aliases = [var.domain_name]
+
   viewer_certificate {
-    cloudfront_default_certificate = true
+    acm_certificate_arn      = aws_acm_certificate_validation.cert[0].certificate_arn
+    ssl_support_method       = "sni-only"
+    minimum_protocol_version = "TLSv1.2_2021"
   }
 
   restrictions {
@@ -100,13 +119,16 @@ resource "aws_cloudfront_distribution" "distribution" {
   }
 
   default_cache_behavior {
-    cache_policy_id        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-    viewer_protocol_policy = "redirect-to-https"
-    compress               = true
-    allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods         = ["GET", "HEAD"]
-    target_origin_id       = aws_s3_bucket.bucket.bucket_regional_domain_name
+    cache_policy_id            = "658327ea-f89d-4fab-a63d-7e88639e58f6"
+    viewer_protocol_policy     = "redirect-to-https"
+    compress                   = true
+    allowed_methods            = ["GET", "HEAD"]
+    cached_methods             = ["GET", "HEAD"]
+    target_origin_id           = aws_s3_bucket.bucket.bucket_regional_domain_name
+    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security_headers.id
   }
+
+  price_class = "PriceClass_100"
 
   tags = local.common_tags
 }
@@ -116,4 +138,60 @@ resource "aws_route53_zone" "zone" {
   count = var.environment == "prod" ? 1 : 0
   name  = var.domain_name
   tags  = local.common_tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+# ACM certificate - only create if it's production environment
+# Expected to fail validation/hang first time, rerun once registrar steps are complete. 
+# Can alternately target apply the zone first, and wait to apply the rest until dig NS parkerlacy.com works
+resource "aws_acm_certificate" "cert" {
+  count             = var.enable_cloudfront ? 1 : 0
+  domain_name       = var.domain_name
+  validation_method = "DNS"
+  # Add if www is needed later: subject_alternative_names = ["www.${var.domain_name}"]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+
+  tags = local.common_tags
+}
+
+resource "aws_route53_record" "cert_validation" {
+  for_each = var.enable_cloudfront ? {
+    for dvo in aws_acm_certificate.cert[0].domain_validation_options : dvo.domain_name => {
+      name   = dvo.resource_record_name
+      record = dvo.resource_record_value
+      type   = dvo.resource_record_type
+    }
+  } : {}
+
+  zone_id         = aws_route53_zone.zone[0].zone_id
+  name            = each.value.name
+  type            = each.value.type
+  records         = [each.value.record]
+  ttl             = 60
+  allow_overwrite = true
+}
+
+resource "aws_route53_record" "site" {
+  for_each = var.enable_cloudfront ? toset(["A", "AAAA"]) : toset([])
+  zone_id  = aws_route53_zone.zone[0].zone_id
+  name     = var.domain_name
+  type     = each.key
+
+  alias {
+    name                   = aws_cloudfront_distribution.distribution[0].domain_name
+    zone_id                = aws_cloudfront_distribution.distribution[0].hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+resource "aws_acm_certificate_validation" "cert" {
+  count                   = var.enable_cloudfront ? 1 : 0
+  certificate_arn         = aws_acm_certificate.cert[0].arn
+  validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
 }
