@@ -375,6 +375,17 @@ jobs:
         working-directory: ./terraform
         run: terraform apply -var-file="env/prod.tfvars" -auto-approve
 
+      - name: Invalidate CloudFront Cache
+        working-directory: ./terraform
+        run: |
+          DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
+          if [ -n "$DISTRIBUTION_ID" ]; then
+            echo "Invalidating CloudFront distribution: $DISTRIBUTION_ID"
+            aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
+          else
+            echo "No CloudFront distribution ID found. Skipping cache invalidation."
+          fi
+
       - name: Output URLs
         working-directory: ./terraform
         run: terraform output
@@ -387,7 +398,12 @@ jobs:
           echo "cloudfront_url=$CLOUDFRONT_URL" >> $GITHUB_OUTPUT
           echo "Testing URL: $CLOUDFRONT_URL"
 
-      - name: Run smoke tests
+      - name: Run smoke tests against Cloudfront URL
         run: |
           chmod +x ./scripts/smoke-test.sh
           ./scripts/smoke-test.sh "${{ steps.get-url.outputs.cloudfront_url }}"
+      
+      - name: Run smoke tests against live URL
+        run: |
+          chmod +x ./scripts/smoke-test.sh
+          ./scripts/smoke-test.sh "https://www.parkerlacy.com" 
