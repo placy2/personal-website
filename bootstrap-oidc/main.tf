@@ -37,6 +37,15 @@ variable "terraform_state_bucket" {
   default     = "parker-terraform-backends"
 }
 
+variable "site_bucket_names" {
+  description = "Site hosting buckets this role deploys to (../terraform/env/*.tfvars)"
+  type        = list(string)
+  default = [
+    "parkerlacy-dev-hosting",
+    "parkerlacy-website-hosting",
+  ]
+}
+
 # GitHub's OIDC thumbprints are stable and documented by GitHub/AWS; AWS also
 # verifies the token against its own trusted root, so this is mostly a formality
 # required by the resource.
@@ -96,113 +105,93 @@ resource "aws_iam_role" "github_deploy" {
   assume_role_policy = data.aws_iam_policy_document.github_trust.json
 }
 
+locals {
+  # Bucket ARNs and their object ARNs. Bucket-level actions only match the
+  # former and object-level actions only the latter, so a statement can list
+  # both and each action still lands exactly where it applies.
+  site_bucket_arns = flatten([
+    for b in var.site_bucket_names : [
+      "arn:aws:s3:::${b}",
+      "arn:aws:s3:::${b}/*",
+    ]
+  ])
+}
+
 # Permissions mirror what ../terraform/main.tf manages: S3 site buckets (dev/prod),
 # CloudFront, Route 53, ACM, plus S3 access to the shared terraform state bucket.
+#
+# Reads are granted as wildcards throughout. The AWS provider refreshes a long
+# tail of legacy/computed attributes on every plan (bucket ACL/CORS/versioning/
+# logging/lifecycle/replication, distribution tags, cert validation records, ...)
+# whether or not this config manages them, so enumerating each Get*/List* as it
+# surfaces is whack-a-mole with no natural end. Writes stay enumerated, except
+# on the two site buckets this role wholly owns.
 data "aws_iam_policy_document" "deploy_permissions" {
+  # Get*/List* on the bucket ARN covers bucket metadata and key listing only —
+  # GetObject requires an object ARN, and the sole object ARN here is this
+  # project's state prefix. Other projects sharing the bucket stay unreadable.
   statement {
-    sid       = "TerraformStateBucket"
+    sid    = "TerraformState"
+    effect = "Allow"
+    actions = [
+      "s3:Get*",
+      "s3:List*",
+      "s3:PutObject",
+      "s3:DeleteObject",
+    ]
+    resources = [
+      "arn:aws:s3:::${var.terraform_state_bucket}",
+      "arn:aws:s3:::${var.terraform_state_bucket}/terraform/personal-website/*",
+    ]
+  }
+
+  # s3:* is scoped to these two buckets and nothing else. The role already needs
+  # DeleteBucket and PutBucketPolicy on them, so it can destroy or expose them
+  # regardless — enumerating the remaining verbs buys no real containment while
+  # guaranteeing another AccessDenied the next time ../terraform grows a setting.
+  statement {
+    sid       = "SiteBuckets"
     effect    = "Allow"
-    actions   = ["s3:ListBucket"]
-    resources = ["arn:aws:s3:::${var.terraform_state_bucket}"]
+    actions   = ["s3:*"]
+    resources = local.site_bucket_arns
   }
 
   statement {
-    sid    = "TerraformStateObjects"
+    sid    = "EdgeRead"
     effect = "Allow"
     actions = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject",
+      "cloudfront:Get*",
+      "cloudfront:List*",
+      "route53:Get*",
+      "route53:List*",
+      "acm:Describe*",
+      "acm:Get*",
+      "acm:List*",
     ]
-    resources = ["arn:aws:s3:::${var.terraform_state_bucket}/terraform/personal-website/*"]
+    resources = ["*"]
   }
 
+  # These services don't support resource-level ARN scoping for their create
+  # actions, so "*" is the only option; keeping the verbs explicit is what bounds
+  # this statement.
   statement {
-    sid    = "SiteBuckets"
+    sid    = "EdgeWrite"
     effect = "Allow"
     actions = [
-      "s3:CreateBucket",
-      "s3:DeleteBucket",
-      "s3:ListBucket",
-      "s3:GetBucketPolicy",
-      "s3:PutBucketPolicy",
-      "s3:DeleteBucketPolicy",
-      "s3:GetBucketPublicAccessBlock",
-      "s3:PutBucketPublicAccessBlock",
-      "s3:GetEncryptionConfiguration",
-      "s3:PutEncryptionConfiguration",
-      "s3:GetBucketWebsite",
-      "s3:PutBucketWebsite",
-      "s3:DeleteBucketWebsite",
-      "s3:GetBucketTagging",
-      "s3:PutBucketTagging",
-    ]
-    resources = [
-      "arn:aws:s3:::parkerlacy-dev-hosting",
-      "arn:aws:s3:::parkerlacy-website-hosting",
-    ]
-  }
-
-  statement {
-    sid    = "SiteObjects"
-    effect = "Allow"
-    actions = [
-      "s3:GetObject",
-      "s3:PutObject",
-      "s3:DeleteObject",
-    ]
-    resources = [
-      "arn:aws:s3:::parkerlacy-dev-hosting/*",
-      "arn:aws:s3:::parkerlacy-website-hosting/*",
-    ]
-  }
-
-  statement {
-    sid    = "CloudFront"
-    effect = "Allow"
-    actions = [
-      "cloudfront:GetDistribution",
       "cloudfront:CreateDistribution",
       "cloudfront:UpdateDistribution",
       "cloudfront:DeleteDistribution",
       "cloudfront:TagResource",
       "cloudfront:UntagResource",
-      "cloudfront:ListTagsForResource",
       "cloudfront:CreateInvalidation",
-      "cloudfront:GetInvalidation",
-      "cloudfront:ListDistributions",
-      "cloudfront:GetResponseHeadersPolicy",
-      "cloudfront:ListResponseHeadersPolicies",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    sid    = "Route53"
-    effect = "Allow"
-    actions = [
-      "route53:GetHostedZone",
       "route53:CreateHostedZone",
       "route53:DeleteHostedZone",
       "route53:ChangeResourceRecordSets",
-      "route53:ListResourceRecordSets",
-      "route53:GetChange",
       "route53:ChangeTagsForResource",
-      "route53:ListTagsForResource",
-    ]
-    resources = ["*"]
-  }
-
-  statement {
-    sid    = "ACM"
-    effect = "Allow"
-    actions = [
       "acm:RequestCertificate",
-      "acm:DescribeCertificate",
       "acm:DeleteCertificate",
       "acm:AddTagsToCertificate",
       "acm:RemoveTagsFromCertificate",
-      "acm:ListTagsForCertificate",
     ]
     resources = ["*"]
   }
