@@ -14,7 +14,7 @@ const About: React.FC = () => {
       <p>
         I went to college at Trinity University in San Antonio, TX, where I majored in Computer
         Science and minored in Music. I deeply enjoyed being able to learn and explore the world I
-        knew I wanted a career in, while simultaneously getting to do make music with many of my
+        knew I wanted a career in, while simultaneously getting to make music with many of my
         now-lifelong friends. I even got to check off a few bucket list items, like singing
         Beethoven's Mass in C in{' '}
         <a
@@ -50,7 +50,7 @@ const About: React.FC = () => {
         After getting a chance to dip my toes into pipeline design & development, I became
         passionate about CI/CD, reliable releases, and DevOps. This led me to switch gears to a
         Cloud Engineer role. I now work day-to-day enabling developer teams and working towards
-        safer, faster, & simpler production releases. I currently work at{' '}
+        safer, faster, and simpler production releases. I currently work at{' '}
         <a href="https://triumph.io" target="_blank" rel="noopener noreferrer">
           Triumph
         </a>
