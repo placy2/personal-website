@@ -33,11 +33,11 @@
   object-fit: cover;
   border-radius: 50%;
   border: 3px solid var(--theme-purple);
-  transition: filter 300ms;
+  transition: box-shadow 300ms ease;
 }
 
 .headshot:hover {
-  filter: drop-shadow(0 0 1.5em var(--theme-purple));
+  box-shadow: 0 0 1.5em var(--theme-purple);
 }
 
 .home-page-container h1 {
@@ -79,6 +79,7 @@
   gap: var(--space-1);
   color: var(--theme-muted);
   font-size: var(--text-sm);
+  transition: color 300ms ease;
 }
 
 .icon-link:hover {
@@ -90,7 +91,8 @@
   width: 50px;
   height: 50px;
   object-fit: contain;
-  transition: filter 300ms;
+  transition: filter 300ms ease;
+  will-change: filter;
 }
 
 .icon-link:hover .icon {
