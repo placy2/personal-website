@@ -406,4 +406,16 @@ jobs:
       - name: Run smoke tests against live URL
         run: |
           chmod +x ./scripts/smoke-test.sh
-          ./scripts/smoke-test.sh "https://www.parkerlacy.com" 
+          LIVE_URL="https://parkerlacy.com"
+          MAX_WAIT=180
+          INTERVAL=15
+          ELAPSED=0
+          until ./scripts/smoke-test.sh "$LIVE_URL"; do
+            if [ "$ELAPSED" -ge "$MAX_WAIT" ]; then
+              echo "❌ Live URL smoke test still failing after ${MAX_WAIT}s, giving up."
+              exit 1
+            fi
+            echo "⏳ Live URL smoke test failed, retrying in ${INTERVAL}s (elapsed: ${ELAPSED}s)..."
+            sleep "$INTERVAL"
+            ELAPSED=$((ELAPSED + INTERVAL))
+          done 
