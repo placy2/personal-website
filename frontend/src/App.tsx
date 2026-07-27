@@ -14,8 +14,11 @@ const App: React.FC = () => {
     // Top-level boundary is the last line of defense (e.g. router/nav failures).
     <ErrorBoundary>
       <Router>
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
         <MenuBar />
-        <main className="main-content">
+        <main id="main-content" className="main-content" tabIndex={-1}>
           {/* Per-route boundary keyed on pathname: a crash on one page shows a
               fallback but keeps the nav and footer intact, and resets on
               navigation. */}
