@@ -32,20 +32,38 @@
   color-scheme: dark;
 }
 
+/* Border-box everywhere so padding never pushes elements past the viewport
+   and triggers horizontal scroll on small screens. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 body {
   margin: 0;
   padding: 0;
   min-width: 320px;
   min-height: 100vh;
+  /* dvh tracks the visible viewport as mobile browser chrome shows/hides,
+     avoiding the extra scroll space that 100vh leaves. */
+  min-height: 100dvh;
   font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
   font-weight: 400;
   line-height: 1.6;
   color: var(--theme-white);
   background-color: var(--theme-black);
+  /* Break long, unbroken strings (e.g. URLs) instead of overflowing. */
+  overflow-wrap: break-word;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Images never exceed their container, preventing overflow on narrow screens. */
+img {
+  max-width: 100%;
 }
 
 h1 {
