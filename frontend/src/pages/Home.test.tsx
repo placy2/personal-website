@@ -14,10 +14,10 @@ describe('Home Component', () => {
     expect(screen.getByText(/cloud engineer based in the denver area/i)).toBeInTheDocument();
   });
 
-  it('shows an icon for every technology', () => {
+  it('shows a labeled link for every technology', () => {
     render(<Home />);
     for (const tech of TECHNOLOGIES) {
-      expect(screen.getByAltText(tech.name)).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: tech.name })).toBeInTheDocument();
     }
   });
 
