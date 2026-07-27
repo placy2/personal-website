@@ -7,15 +7,19 @@ import { expect } from 'vitest';
  *
  * Only WCAG A/AA tagged rules are run (not axe "best-practice" rules) so
  * the assertions map directly to the standards the site is expected to meet.
- * The color-contrast rule needs real layout, which jsdom cannot provide, so
- * axe reports it as "incomplete" rather than a violation here — contrast is
- * instead exercised at runtime via @axe-core/react during development.
+ * The color-contrast rule is disabled: it samples rendered pixels via canvas,
+ * which jsdom does not implement, so it can only ever report "incomplete" here
+ * (and logs a canvas warning per run). Contrast is instead exercised at runtime
+ * via @axe-core/react during development.
  */
 export async function expectNoA11yViolations(container: HTMLElement): Promise<void> {
   const results = await axe.run(container, {
     runOnly: {
       type: 'tag',
       values: ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa'],
+    },
+    rules: {
+      'color-contrast': { enabled: false },
     },
   });
 
