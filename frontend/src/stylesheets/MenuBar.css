@@ -51,6 +51,11 @@ nav ul a.active {
 /* Toggle button for small screens */
 .menu-toggle {
   display: none;
+  align-items: center;
+  justify-content: center;
+  /* Comfortable ~44px tap target for touch devices. */
+  min-width: 44px;
+  min-height: 44px;
   background: none;
   color: var(--theme-white);
   border: none;
@@ -67,7 +72,7 @@ nav ul a.active {
   }
 
   .menu-toggle {
-    display: block;
+    display: flex;
   }
 
   nav ul {
@@ -82,7 +87,7 @@ nav ul a.active {
   }
 
   nav ul a {
-    padding: var(--space-2) var(--space-2);
+    padding: var(--space-3) var(--space-2);
   }
 
   nav ul a.active {

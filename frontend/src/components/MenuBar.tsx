@@ -16,7 +16,7 @@ const MenuBar: React.FC = () => {
   };
 
   return (
-    <nav>
+    <nav aria-label="Primary">
       <Link to={ROUTES.HOME} className="wordmark" onClick={closeMenu}>
         {APP_CONFIG.author}
       </Link>
@@ -24,11 +24,12 @@ const MenuBar: React.FC = () => {
         className="menu-toggle"
         onClick={toggleMenu}
         aria-expanded={isMenuOpen}
+        aria-controls="primary-menu"
         aria-label="Toggle navigation"
       >
-        ☰
+        <span aria-hidden="true">☰</span>
       </button>
-      <ul className={isMenuOpen ? 'show' : ''}>
+      <ul id="primary-menu" className={isMenuOpen ? 'show' : ''}>
         <MenuItem to={ROUTES.HOME} label="Home" onClick={closeMenu} />
         <MenuItem to={ROUTES.ABOUT} label="About" onClick={closeMenu} />
         <MenuItem to={ROUTES.PROJECTS} label="Projects" onClick={closeMenu} />
