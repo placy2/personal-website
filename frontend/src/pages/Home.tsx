@@ -5,8 +5,13 @@ import { APP_CONFIG, EXTERNAL_LINKS, TECHNOLOGIES } from '../constants';
 const Home: React.FC = () => {
   return (
     <div className="home-page-container">
-      <a href={EXTERNAL_LINKS.GITHUB} target="_blank" rel="noopener noreferrer">
-        <img src={headshotPhoto} className="headshot" alt="Recent headshot of Parker (2023)" />
+      <a
+        href={EXTERNAL_LINKS.GITHUB}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Parker Lacy's GitHub profile (opens in a new tab)"
+      >
+        <img src={headshotPhoto} className="headshot" alt="Headshot of Parker Lacy" />
       </a>
       <h1>Parker Lacy</h1>
       <div className="home-page-text">
@@ -25,7 +30,7 @@ const Home: React.FC = () => {
             rel="noopener noreferrer"
             className="icon-link"
           >
-            <img src={tech.icon} alt={tech.name} className="icon" />
+            <img src={tech.icon} alt="" className="icon" />
             <span>{tech.name}</span>
           </a>
         ))}

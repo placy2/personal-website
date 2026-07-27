@@ -3,6 +3,20 @@ import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './stylesheets/index.css';
 
+// Development-only accessibility auditing. @axe-core/react logs WCAG
+// violations to the browser console on every render so issues surface
+// during local development without shipping any code to production.
+if (import.meta.env.DEV) {
+  void (async () => {
+    const [{ default: React }, { default: ReactDOM }, { default: axe }] = await Promise.all([
+      import('react'),
+      import('react-dom'),
+      import('@axe-core/react'),
+    ]);
+    await axe(React, ReactDOM, 1000);
+  })();
+}
+
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />
