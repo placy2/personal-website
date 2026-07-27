@@ -20,7 +20,10 @@ npm run test:run       # vitest, single pass (what CI runs)
 npx vitest run src/pages/Home.test.tsx        # single test file
 npx vitest run -t "renders heading"           # single test by name
 npm run test:e2e       # Playwright smoke tests (e2e/); auto-starts `vite preview` on :4173, requires a prior build
+npm run lhci           # Lighthouse CI audit of dist/ (perf/a11y/best-practices/SEO); requires a prior build + local Chrome
 ```
+
+Core Web Vitals (CLS/LCP/INP/FCP/TTFB) are reported at runtime via `src/reportWebVitals.ts`, wired into `src/main.tsx`. The default handler logs to the console; swap in an analytics-backed `ReportHandler` to collect real-user metrics.
 
 Infrastructure (from repo root; see `scripts/README.md` for AWS setup details):
 
@@ -40,6 +43,7 @@ Infrastructure (from repo root; see `scripts/README.md` for AWS setup details):
 ## CI/CD (GitHub Actions)
 
 - `pr-validate.yml`: on PRs touching `frontend/**` — lint, unit tests, format check, build, Playwright e2e. Deliberately uses plain `pull_request` (no secrets) so Dependabot/Actions-bump PRs exercise the workflow pre-merge; don't switch it to `pull_request_target`.
+- `lighthouse.yml`: on PRs touching `frontend/**` — builds the site and runs Lighthouse CI (`@lhci/cli` + `frontend/lighthouserc.json`) against `dist/`, uploading reports to Lighthouse CI temporary public storage. Like `pr-validate.yml` it uses plain `pull_request` and needs no secrets.
 - `terraform-plan.yml`: terraform plan on PRs touching `terraform/**`.
 - `deploy.yml`: on push to main — detects meaningful changes (frontend/terraform/workflows), deploys to dev automatically; prod requires manual approval via GitHub environments or `workflow_dispatch`.
 - Pre-commit hook (husky, config lives in `frontend/.husky/` and `lint-staged` in `frontend/package.json`) runs eslint --fix + prettier on staged files.
