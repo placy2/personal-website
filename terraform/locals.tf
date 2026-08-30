@@ -16,5 +16,6 @@ locals {
     ".ico"  = "image/x-icon"
     ".json" = "application/json"
     ".txt"  = "text/plain"
+    ".xml"  = "application/xml"
   }
 }
