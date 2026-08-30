@@ -30,6 +30,20 @@ for (const { path, heading } of routes) {
     await page.goto(path);
     await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
   });
+
+  // A direct/cold load of a non-home route (as opposed to client-side nav)
+  // is a full navigation, so it exercises the same fallback path a
+  // bookmark, shared link, or crawler hits. Until issue #169's CloudFront
+  // routing work lands, that fallback can serve the wrong prerendered page
+  // (see scripts/prerender.mjs's data-prerendered-route guard) — this
+  // catches a regression of that guard, which otherwise throws a silent,
+  // build-passing hydration mismatch.
+  test(`${path} has no console errors on a direct load`, async ({ page }) => {
+    const errors = collectConsoleErrors(page);
+    await page.goto(path);
+    await expect(page.getByRole('heading', { level: 1, name: heading })).toBeVisible();
+    expect(errors).toEqual([]);
+  });
 }
 
 test('nav from Home to Projects shows project cards', async ({ page }) => {
@@ -46,4 +60,15 @@ test('no console errors on load', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1 })).toBeVisible();
   expect(errors).toEqual([]);
+});
+
+// The actual root cause of issue #169: classification crawlers fetch HTML
+// and never execute JavaScript, so the response body itself — not what
+// renders after hydration — has to carry real content and metadata.
+test('/ serves crawlable content without executing JavaScript', async ({ request }) => {
+  const response = await request.get('/');
+  expect(response.status()).toBe(200);
+  const body = await response.text();
+  expect(body).toContain('Parker Lacy');
+  expect(body).toMatch(/<meta\s+name="description"\s+content="[^"]+"/);
 });
