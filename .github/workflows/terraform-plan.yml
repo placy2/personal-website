@@ -5,8 +5,8 @@ name: Terraform Plan
 # terraform changes only.
 #
 # NOTE: `pull_request` runs triggered by Dependabot use *Dependabot secrets*,
-# not repo secrets — duplicate AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY into
-# Settings → Secrets and variables → Dependabot for Dependabot terraform PRs.
+# not repo secrets — duplicate AWS_DEPLOY_ROLE_ARN into Settings → Secrets and
+# variables → Dependabot for Dependabot terraform PRs.
 
 on:
   pull_request:
@@ -16,6 +16,10 @@ on:
 
 permissions:
   contents: read
+  # Required to mint the OIDC JWT that configure-aws-credentials exchanges for
+  # role credentials. Without it the runner issues no token and the action
+  # fails with "Could not load credentials from any providers".
+  id-token: write
 
 env:
   NODE_VERSION: "22"
