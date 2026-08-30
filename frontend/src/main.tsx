@@ -1,5 +1,5 @@
 import { StrictMode } from 'react';
-import { createRoot } from 'react-dom/client';
+import { createRoot, hydrateRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './stylesheets/index.css';
 
@@ -17,8 +17,27 @@ if (import.meta.env.DEV) {
   })();
 }
 
-createRoot(document.getElementById('root')!).render(
+const container = document.getElementById('root')!;
+const app = (
   <StrictMode>
     <App />
   </StrictMode>
 );
+
+// Prerendered routes (see scripts/prerender.mjs) ship non-empty markup keyed
+// to the route it was built for. Only hydrate when that matches where we
+// actually loaded — a direct load of e.g. /about can be served
+// dist/index.html's markup as an interim SPA fallback (until issue #169's
+// CloudFront routing work lands), and hydrating mismatched markup throws a
+// React hydration error. Falling back to a plain client render here trades a
+// harmless "container not empty" warning for a broken page.
+const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);
+const prerenderedForCurrentRoute =
+  container.dataset.prerenderedRoute !== undefined &&
+  normalize(container.dataset.prerenderedRoute) === normalize(window.location.pathname);
+
+if (prerenderedForCurrentRoute) {
+  hydrateRoot(container, app);
+} else {
+  createRoot(container).render(app);
+}
