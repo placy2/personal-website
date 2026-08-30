@@ -1,30 +1,35 @@
 import { defineConfig, loadEnv } from 'vite';
-import react from '@vitejs/plugin-react-swc';
+import react from '@vitejs/plugin-react';
 import path from 'path';
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, isSsrBuild }) => {
   // Load env file based on `mode` in the current working directory.
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
     plugins: [react()],
 
-    // Build optimizations
+    // Build optimizations. The SSR build (`vite build --ssr src/entry-server.tsx`,
+    // driven by scripts/prerender.mjs) outputs a single predictably-named entry
+    // to dist-ssr/ instead of the hashed, chunk-split client bundle.
     build: {
       target: 'esnext',
       minify: 'oxc',
+      outDir: isSsrBuild ? 'dist-ssr' : 'dist',
       rollupOptions: {
-        output: {
-          manualChunks: id => {
-            if (id.includes('node_modules/react-router-dom')) {
-              return 'router';
-            }
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-              return 'vendor';
-            }
-          },
-        },
+        output: isSsrBuild
+          ? { entryFileNames: 'entry-server.js' }
+          : {
+              manualChunks: id => {
+                if (id.includes('node_modules/react-router-dom')) {
+                  return 'router';
+                }
+                if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+                  return 'vendor';
+                }
+              },
+            },
       },
     },
 

@@ -66,12 +66,21 @@ resource "aws_iam_openid_connect_provider" "github" {
 }
 
 # Trust policy scoped to exactly the workflow contexts that currently authenticate
-# to AWS in .github/workflows/deploy.yml:
-#   - terraform-plan / deploy-prod-plan: run on pushes to main (no `environment:`),
-#     so the sub claim is ref-based.
-#   - deploy-dev / deploy-prod-apply: use `environment: development` / `production`,
-#     which switches the sub claim to the environment form.
+# to AWS:
+#   - deploy.yml terraform-plan / deploy-prod-plan: run on pushes to main (no
+#     `environment:`), so the sub claim is ref-based.
+#   - deploy.yml deploy-dev / deploy-prod-apply: use `environment: development` /
+#     `production`, which switches the sub claim to the environment form.
+#   - terraform-plan.yml: runs on `pull_request`, whose default sub claim
+#     (`repo:OWNER/REPO:pull_request`) is deliberately NOT trusted here — that
+#     would hand this role's S3/CloudFront/Route 53 write access to every PR
+#     branch. It sets `environment: development` instead to land on the
+#     already-trusted environment form above.
 # workflow_dispatch runs are included since they still target refs/heads/main.
+#
+# Adding a workflow that authenticates to AWS? Check its sub claim matches one of
+# these values, or it will fail with "Not authorized to perform
+# sts:AssumeRoleWithWebIdentity".
 data "aws_iam_policy_document" "github_trust" {
   statement {
     effect  = "Allow"

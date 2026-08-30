@@ -42,7 +42,7 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
 }
 
 resource "aws_s3_object" "file" {
-  for_each     = fileset(path.module, "../frontend/dist/**/*.{html,css,js,jpeg,jpg,png,webp,svg,gif,ico}")
+  for_each     = fileset(path.module, "../frontend/dist/**/*.{html,css,js,txt,xml,jpeg,jpg,png,webp,svg,gif,ico}")
   bucket       = aws_s3_bucket.bucket.id
   key          = replace(each.value, "/^../frontend/dist//", "")
   source       = each.value

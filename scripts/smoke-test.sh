@@ -88,6 +88,65 @@ else
   echo -e "${YELLOW}⚠ React app container not found (expected id='root')${NC}"
 fi
 
+# Test 6: Crawlability regression guard (GH #169) - a classification crawler
+# fetches HTML and never executes JavaScript, so the root cause of the site
+# being blocked was an empty <div id="root"> and no meta description. These
+# are hard failures: a regression here silently reintroduces the block.
+echo "Test 6: Checking for crawlable content and metadata..."
+# The description meta tag is formatted across multiple lines, and grep
+# matches line-by-line — flatten to one line first so this works with both
+# BSD grep (local/macOS) and GNU grep (CI) without relying on a
+# multi-line-capable extension either one might lack.
+FLAT_CONTENT=$(echo "$CONTENT" | tr '\n' ' ')
+
+if echo "$FLAT_CONTENT" | grep -qE '<meta[[:space:]]+name="description"[[:space:]]+content="[^"]+"'; then
+  echo -e "${GREEN}✓ meta description present${NC}"
+else
+  echo -e "${RED}✗ meta description missing — crawlers see no page description${NC}"
+  exit 1
+fi
+
+if echo "$FLAT_CONTENT" | grep -qE '<div id="root"[^>]*></div>'; then
+  echo -e "${RED}✗ #root is empty — page has no crawlable content without JavaScript${NC}"
+  exit 1
+else
+  echo -e "${GREEN}✓ #root contains prerendered content${NC}"
+fi
+
+# Test 7: robots.txt exists, is served as plain text, and points to the sitemap
+echo "Test 7: Checking robots.txt..."
+ROBOTS_HEADERS=$(curl -s -D - -o /tmp/smoke-test-robots.txt "$URL/robots.txt")
+ROBOTS_STATUS=$(echo "$ROBOTS_HEADERS" | head -n 1 | grep -oE '[0-9]{3}')
+ROBOTS_CONTENT_TYPE=$(echo "$ROBOTS_HEADERS" | grep -i "^content-type:" | tr -d '\r')
+
+if [ "$ROBOTS_STATUS" = "200" ] && echo "$ROBOTS_CONTENT_TYPE" | grep -qi "text/plain"; then
+  echo -e "${GREEN}✓ /robots.txt: 200, $ROBOTS_CONTENT_TYPE${NC}"
+else
+  echo -e "${RED}✗ /robots.txt returned status '$ROBOTS_STATUS', content-type '$ROBOTS_CONTENT_TYPE' (expected 200, text/plain)${NC}"
+  exit 1
+fi
+
+if grep -q "^Sitemap:" /tmp/smoke-test-robots.txt; then
+  echo -e "${GREEN}✓ robots.txt references a sitemap${NC}"
+else
+  echo -e "${RED}✗ robots.txt has no Sitemap: line${NC}"
+  exit 1
+fi
+rm -f /tmp/smoke-test-robots.txt
+
+# Test 8: sitemap.xml exists and is served with an XML content type
+echo "Test 8: Checking sitemap.xml..."
+SITEMAP_HEADERS=$(curl -s -D - -o /dev/null "$URL/sitemap.xml")
+SITEMAP_STATUS=$(echo "$SITEMAP_HEADERS" | head -n 1 | grep -oE '[0-9]{3}')
+SITEMAP_CONTENT_TYPE=$(echo "$SITEMAP_HEADERS" | grep -i "^content-type:" | tr -d '\r')
+
+if [ "$SITEMAP_STATUS" = "200" ] && echo "$SITEMAP_CONTENT_TYPE" | grep -qi "xml"; then
+  echo -e "${GREEN}✓ /sitemap.xml: 200, $SITEMAP_CONTENT_TYPE${NC}"
+else
+  echo -e "${RED}✗ /sitemap.xml returned status '$SITEMAP_STATUS', content-type '$SITEMAP_CONTENT_TYPE' (expected 200, xml)${NC}"
+  exit 1
+fi
+
 echo "----------------------------------------"
 if [ "$ALL_FOUND" = true ]; then
   echo -e "${GREEN}✅ All smoke tests passed!${NC}"
