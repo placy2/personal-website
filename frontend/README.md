@@ -10,7 +10,13 @@ npm run build      # typecheck + production build
 npm run test       # vitest watch mode (test:run for CI mode)
 npm run lint       # eslint (lint:fix to autofix)
 npm run format     # prettier
+npm run lhci       # Lighthouse CI audit of dist/ (needs a prior build + Chrome)
 ```
+
+## Performance monitoring
+
+- **Web Vitals**: `src/reportWebVitals.ts` subscribes to CLS/LCP/INP/FCP/TTFB (via the `web-vitals` package) and is invoked from `main.tsx`. The default reporter logs to the console; pass an analytics-backed `ReportHandler` to collect real-user metrics.
+- **Lighthouse CI**: `lighthouserc.json` configures `@lhci/cli` to audit the built `dist/`. It runs automatically on frontend PRs via `.github/workflows/lighthouse.yml`.
 
 ## Structure
 
