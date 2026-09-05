@@ -76,6 +76,11 @@ resource "aws_iam_openid_connect_provider" "github" {
 #     would hand this role's S3/CloudFront/Route 53 write access to every PR
 #     branch. It sets `environment: development` instead to land on the
 #     already-trusted environment form above.
+#   - cleanup.yml terraform-destroy-plan: no `environment:`, ref-based sub
+#     claim like deploy.yml's plan jobs.
+#   - cleanup.yml terraform-destroy: uses `environment: dev-cleanup` /
+#     `prod-cleanup` (a required-reviewer gate on destructive actions,
+#     deliberately distinct from development/production above).
 # workflow_dispatch runs are included since they still target refs/heads/main.
 #
 # Adding a workflow that authenticates to AWS? Check its sub claim matches one of
@@ -104,6 +109,8 @@ data "aws_iam_policy_document" "github_trust" {
         "repo:${var.github_repo}:ref:refs/heads/main",
         "repo:${var.github_repo}:environment:development",
         "repo:${var.github_repo}:environment:production",
+        "repo:${var.github_repo}:environment:dev-cleanup",
+        "repo:${var.github_repo}:environment:prod-cleanup",
       ]
     }
   }
