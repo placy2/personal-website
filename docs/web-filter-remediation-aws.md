@@ -124,6 +124,13 @@ DNSSEC failures are the hardest of this group to unwind quickly.
 
 ## 3. Real 404s + correct per-route fallback (issue finding #2, routing half)
 
+> **Status:** the routing half has landed. `aws_cloudfront_function.rewrite_index`
+> (`terraform/functions/rewrite-index.js`) rewrites extensionless paths to
+> `<path>/index.html`, so direct loads of `/about`, `/projects` and `/resume` get their
+> own prerendered page. It rewrites every extensionless path rather than a list of known
+> routes, so there's no list to keep in sync with `routeMeta.ts`. Real 404s (replacing
+> `custom_error_response`) are still to do.
+
 **Risk: medium.** This changes what every request that isn't a literal S3 key resolves to
 — get the CloudFront Function's route list wrong and a legitimate app route 404s for real
 users.

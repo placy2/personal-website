@@ -46,6 +46,9 @@ jobs:
           cache: "npm"
           cache-dependency-path: "./frontend/package-lock.json"
 
+      - name: Test CloudFront Function
+        run: node --test terraform/functions/*.test.mjs
+
       # terraform/main.tf enumerates ../frontend/dist via fileset(), so the
       # frontend must be built for the plan to reflect the real S3 object set.
       - name: Build frontend
