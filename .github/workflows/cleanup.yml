@@ -166,11 +166,15 @@ jobs:
           echo "📅 Last deploy: ${{ needs.check-last-deploy.outputs.last-deploy-date }}"
           echo "📊 Days since deploy: ${{ needs.check-last-deploy.outputs.days-since-deploy }}"
           echo ""
-          terraform plan -destroy -var-file="env/${{ needs.check-last-deploy.outputs.environment }}.tfvars" -no-color
+          terraform plan -destroy -lock-timeout=5m -var-file="env/${{ needs.check-last-deploy.outputs.environment }}.tfvars" -no-color
 
   terraform-destroy:
     name: Destroy Infrastructure
     runs-on: ubuntu-latest
+    # Same group as deploy.yml's apply jobs so a destroy never overlaps a deploy.
+    concurrency:
+      group: terraform-${{ needs.check-last-deploy.outputs.environment }}
+      cancel-in-progress: false
     needs: [check-last-deploy, terraform-destroy-plan]
     if: needs.check-last-deploy.outputs.should-cleanup == 'true'
     environment: 
@@ -202,7 +206,7 @@ jobs:
           echo "📅 Last deploy: ${{ needs.check-last-deploy.outputs.last-deploy-date }}"
           echo "📊 Days since deploy: ${{ needs.check-last-deploy.outputs.days-since-deploy }}"
           echo ""
-          terraform destroy -var-file="env/${{ needs.check-last-deploy.outputs.environment }}.tfvars" -auto-approve
+          terraform destroy -lock-timeout=5m -var-file="env/${{ needs.check-last-deploy.outputs.environment }}.tfvars" -auto-approve
 
       - name: Cleanup Summary
         run: |

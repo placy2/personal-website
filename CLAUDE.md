@@ -39,6 +39,7 @@ Infrastructure (from repo root; see `scripts/README.md` for AWS setup details):
 - Path aliases `@`, `@components`, `@pages`, `@assets`, `@styles` are defined in **both** `vite.config.ts` and `vitest.config.ts` — keep them in sync if changed.
 - Two test layers: Vitest + React Testing Library unit tests colocated with source (`*.test.tsx`, jsdom, setup in `src/test/setup.ts`), and Playwright smoke tests in `e2e/` that run against the real production build (`vite preview`) to catch bundle-level regressions unit tests can't see. Vitest excludes `e2e/**`; don't put Playwright specs elsewhere.
 - Terraform: single config in `terraform/`, parameterized per environment via `env/dev.tfvars` / `env/prod.tfvars` with separate backend state files (`env/*.s3.tfbackend`). Dev is S3-only (cost saving); prod adds CloudFront + Route 53 + ACM for parkerlacy.com. Terraform itself uploads `frontend/dist/**` as `aws_s3_object` resources — deploying the site is a `terraform apply`, so the frontend must be built first (deploy.sh handles this).
+- Terraform state is locked via S3-native locking (`use_lockfile = true` in `provider.tf`; lock object `<key>.tflock`). All plan/apply/destroy calls pass `-lock-timeout=5m`, and the state-writing CI jobs share `concurrency` groups `terraform-dev` / `terraform-prod`. Local checkouts initialized before locking was enabled must run `terraform init -reconfigure -backend-config=env/<env>.s3.tfbackend` once.
 
 ## CI/CD (GitHub Actions)
 

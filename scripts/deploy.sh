@@ -27,17 +27,17 @@ fi
 case $ACTION in
     "plan")
         echo "📊 Running terraform plan..."
-        terraform plan -var-file="env/${ENVIRONMENT}.tfvars"
+        terraform plan -lock-timeout=5m -var-file="env/${ENVIRONMENT}.tfvars"
         ;;
     "apply")
         echo "🔧 Running terraform apply..."
-        terraform apply -var-file="env/${ENVIRONMENT}.tfvars" -auto-approve
+        terraform apply -lock-timeout=5m -var-file="env/${ENVIRONMENT}.tfvars" -auto-approve
         echo "✅ Deployment complete!"
         terraform output
         ;;
     "destroy")
         echo "🗑️  Running terraform destroy..."
-        terraform destroy -var-file="env/${ENVIRONMENT}.tfvars" -auto-approve
+        terraform destroy -lock-timeout=5m -var-file="env/${ENVIRONMENT}.tfvars" -auto-approve
         echo "✅ Infrastructure destroyed!"
         ;;
     *)
