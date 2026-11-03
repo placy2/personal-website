@@ -10,89 +10,34 @@ import { fileURLToPath } from 'node:url';
 
 const rootDir = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..');
 const distDir = path.join(rootDir, 'dist');
-const siteUrl = 'https://parkerlacy.com';
 
-const { render, ROUTE_META } = await import(path.join(rootDir, 'dist-ssr/entry-server.js'));
+const { render, renderHead, canonicalUrl, ROUTE_META } = await import(
+  path.join(rootDir, 'dist-ssr/entry-server.js')
+);
 
-const escapeHtml = str =>
-  str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const HEAD_PLACEHOLDER = '<!--app-head-->';
+const ROOT_DIV = '<div id="root"></div>';
 
-// Applies `regex` (with two capture groups bracketing the value to replace)
-// to `html`, throwing if the template no longer matches — a silent no-op
-// here would ship stale per-route metadata.
-function replaceTagValue(html, regex, value, label) {
-  if (!regex.test(html)) {
-    throw new Error(`prerender: could not find ${label} in the index.html template`);
+// Fills index.html's two slots for one route: the <head> tags (built by
+// src/seo/head.ts from ROUTE_META + APP_CONFIG) and the rendered app markup.
+// Throws if either slot is missing, since a silent no-op here would ship a
+// page with no title or no content.
+function applyRoute(template, route) {
+  for (const slot of [HEAD_PLACEHOLDER, ROOT_DIV]) {
+    if (!template.includes(slot)) {
+      throw new Error(`prerender: could not find ${slot} in the index.html template`);
+    }
   }
-  return html.replace(regex, (_match, pre, post) => `${pre}${value}${post}`);
-}
-
-function applyRouteMeta(template, route) {
-  const canonicalUrl = `${siteUrl}${route.path === '/' ? '/' : route.path}`;
-  const title = escapeHtml(route.title);
-  const description = escapeHtml(route.description);
-
-  let html = template;
-  html = replaceTagValue(html, /(<title>)[^<]*(<\/title>)/, title, '<title>');
-  html = replaceTagValue(
-    html,
-    /(<meta\s+name="description"\s+content=")[^"]*("\s*\/>)/,
-    description,
-    'meta description'
-  );
-  html = replaceTagValue(
-    html,
-    /(<link rel="canonical" href=")[^"]*("\s*\/>)/,
-    canonicalUrl,
-    'canonical link'
-  );
-  html = replaceTagValue(
-    html,
-    /(<meta property="og:title" content=")[^"]*("\s*\/>)/,
-    title,
-    'og:title'
-  );
-  html = replaceTagValue(
-    html,
-    /(<meta\s+property="og:description"\s+content=")[^"]*("\s*\/>)/,
-    description,
-    'og:description'
-  );
-  html = replaceTagValue(
-    html,
-    /(<meta property="og:url" content=")[^"]*("\s*\/>)/,
-    canonicalUrl,
-    'og:url'
-  );
-  html = replaceTagValue(
-    html,
-    /(<meta name="twitter:title" content=")[^"]*("\s*\/>)/,
-    title,
-    'twitter:title'
-  );
-  html = replaceTagValue(
-    html,
-    /(<meta\s+name="twitter:description"\s+content=")[^"]*("\s*\/>)/,
-    description,
-    'twitter:description'
-  );
 
   // data-prerendered-route lets main.tsx detect when it was served the wrong
   // page's static HTML (e.g. a direct load of /about served dist/index.html's
   // content as an interim SPA fallback until issue #169's CloudFront routing
   // fix lands) and fall back to a plain client render instead of hydrating
-  // mismatched markup.
+  // mismatched markup. route.path comes from ROUTE_META, not user input.
   const markup = render(route.path);
-  const rootDivRegex = /<div id="root"><\/div>/;
-  if (!rootDivRegex.test(html)) {
-    throw new Error('prerender: could not find #root container in the index.html template');
-  }
-  html = html.replace(
-    rootDivRegex,
-    `<div id="root" data-prerendered-route="${escapeHtml(route.path)}">${markup}</div>`
-  );
-
-  return html;
+  return template
+    .replace(HEAD_PLACEHOLDER, renderHead(route))
+    .replace(ROOT_DIV, `<div id="root" data-prerendered-route="${route.path}">${markup}</div>`);
 }
 
 // SSR-rendered <img>/<script>/<link> asset URLs are a pure function of file
@@ -116,7 +61,7 @@ function buildSitemap(routes) {
   const urls = routes
     .map(
       route => `  <url>
-    <loc>${siteUrl}${route.path === '/' ? '/' : route.path}</loc>
+    <loc>${canonicalUrl(route.path)}</loc>
   </url>`
     )
     .join('\n');
@@ -132,7 +77,7 @@ async function main() {
   const template = await readFile(path.join(distDir, 'index.html'), 'utf-8');
 
   for (const route of ROUTE_META) {
-    const html = applyRouteMeta(template, route);
+    const html = applyRoute(template, route);
     await assertAssetsExist(html, route.path);
 
     const outPath =

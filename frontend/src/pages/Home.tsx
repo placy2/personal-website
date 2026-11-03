@@ -1,6 +1,7 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import headshotPhoto from '../assets/2024headshot.jpeg';
-import { APP_CONFIG, EXTERNAL_LINKS, TECHNOLOGIES } from '../constants';
+import { APP_CONFIG, EXTERNAL_LINKS, ROUTES, TECHNOLOGIES } from '../constants';
 
 const Home: React.FC = () => {
   return (
@@ -14,10 +15,26 @@ const Home: React.FC = () => {
         <img src={headshotPhoto} className="headshot" alt="Headshot of Parker Lacy" />
       </a>
       <h1>Parker Lacy</h1>
+      <p className="home-headline">{APP_CONFIG.headline}</p>
       <div className="home-page-text">
-        {APP_CONFIG.description.map((paragraph, index) => (
-          <p key={index}>{paragraph}</p>
-        ))}
+        <p>{APP_CONFIG.intro}</p>
+        <p>{APP_CONFIG.personal}</p>
+      </div>
+      {/* TODO: point these at /work and /architecture once those pages exist. */}
+      <div className="home-actions">
+        <Link className="button" to={ROUTES.PROJECTS}>
+          See my projects
+        </Link>
+        <a
+          className="button button-secondary"
+          href={EXTERNAL_LINKS.SITE_REPO}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          How this site runs
+        </a>
+      </div>
+      <div className="home-page-text">
         <hr className="home-divider" />
         <p>Here are a few of my favorite tools and technologies I use regularly:</p>
       </div>

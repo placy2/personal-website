@@ -178,6 +178,7 @@ data "aws_iam_policy_document" "deploy_permissions" {
     actions = [
       "cloudfront:Get*",
       "cloudfront:List*",
+      "cloudfront:DescribeFunction",
       "route53:Get*",
       "route53:List*",
       "acm:Describe*",
@@ -200,6 +201,10 @@ data "aws_iam_policy_document" "deploy_permissions" {
       "cloudfront:TagResource",
       "cloudfront:UntagResource",
       "cloudfront:CreateInvalidation",
+      "cloudfront:CreateFunction",
+      "cloudfront:UpdateFunction",
+      "cloudfront:PublishFunction",
+      "cloudfront:DeleteFunction",
       "route53:CreateHostedZone",
       "route53:DeleteHostedZone",
       "route53:ChangeResourceRecordSets",

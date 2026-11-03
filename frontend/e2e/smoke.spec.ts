@@ -48,7 +48,9 @@ for (const { path, heading } of routes) {
 
 test('nav from Home to Projects shows project cards', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('link', { name: 'Projects' }).click();
+  // exact: Playwright matches names as substrings by default, and the home
+  // page's "See my projects" button would also match.
+  await page.getByRole('link', { name: 'Projects', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
   for (const project of PROJECTS) {
     await expect(page.getByRole('heading', { name: project.name })).toBeVisible();

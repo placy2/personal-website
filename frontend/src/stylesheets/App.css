@@ -46,6 +46,14 @@
   margin-bottom: var(--space-2);
 }
 
+.home-headline {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  color: var(--theme-white);
+  text-wrap: balance;
+}
+
 .home-page-text {
   max-width: 34rem;
   color: var(--theme-muted);
@@ -57,6 +65,14 @@
 
 .home-page-text p:last-child {
   margin-bottom: 0;
+}
+
+.home-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
 .home-divider {
@@ -114,6 +130,15 @@
 .button:hover {
   background-color: var(--theme-dark-purple);
   text-decoration: none;
+}
+
+.button-secondary {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 2px var(--theme-purple);
+}
+
+.button-secondary:hover {
+  background-color: var(--theme-surface);
 }
 
 /* FOOTER */

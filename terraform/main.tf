@@ -72,6 +72,17 @@ data "aws_cloudfront_response_headers_policy" "security_headers" {
   name = "Managed-SecurityHeadersPolicy"
 }
 
+# Rewrites /about -> /about/index.html so direct loads get each route's own
+# prerendered page instead of the home page. See functions/rewrite-index.js.
+resource "aws_cloudfront_function" "rewrite_index" {
+  count   = var.enable_cloudfront ? 1 : 0
+  name    = "${var.environment}-personal-website-rewrite-index"
+  runtime = "cloudfront-js-2.0"
+  comment = "Map extensionless routes to their prerendered index.html"
+  publish = true
+  code    = file("${path.module}/functions/rewrite-index.js")
+}
+
 # CloudFront distribution - optional for cost savings
 resource "aws_cloudfront_distribution" "distribution" {
   count = var.enable_cloudfront ? 1 : 0
@@ -126,6 +137,11 @@ resource "aws_cloudfront_distribution" "distribution" {
     cached_methods             = ["GET", "HEAD"]
     target_origin_id           = aws_s3_bucket.bucket.bucket_regional_domain_name
     response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security_headers.id
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.rewrite_index[0].arn
+    }
   }
 
   price_class = "PriceClass_100"
