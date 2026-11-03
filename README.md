@@ -129,14 +129,20 @@ cd terraform
 terraform init -reconfigure -backend-config=env/dev.s3.tfbackend
 
 # Plan with environment-specific variables
-terraform plan -var-file="env/dev.tfvars"
+terraform plan -lock-timeout=5m -var-file="env/dev.tfvars"
 
 # Apply changes
-terraform apply -var-file="env/dev.tfvars"
+terraform apply -lock-timeout=5m -var-file="env/dev.tfvars"
 
 # Destroy infrastructure
-terraform destroy -var-file="env/dev.tfvars"
+terraform destroy -lock-timeout=5m -var-file="env/dev.tfvars"
 ```
+
+**State locking:** the S3 backend uses S3-native locking (`use_lockfile = true`), so a
+run waits for (or fails on) a lock held by CI or another user instead of clobbering state.
+`-lock-timeout=5m` makes Terraform wait for the lock rather than failing immediately.
+If you initialized `terraform/` before locking was enabled, re-run
+`terraform init -reconfigure -backend-config=env/<env>.s3.tfbackend` once after pulling.
 
 ## 🔧 Testing
 

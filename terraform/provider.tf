@@ -6,6 +6,9 @@ terraform {
   backend "s3" {
     bucket = "parker-terraform-backends"
     region = "us-east-1"
+    # S3-native state locking (TF >= 1.10): writes <key>.tflock next to the
+    # state so concurrent CI jobs / local runs can't clobber each other.
+    use_lockfile = true
   }
 }
 

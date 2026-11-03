@@ -14,7 +14,7 @@ cd "$(dirname "$0")/../terraform"
 terraform init -reconfigure -backend-config="env/${ENVIRONMENT}.s3.tfbackend"
 
 # Destroy infrastructure
-terraform destroy -var-file="env/${ENVIRONMENT}.tfvars" -auto-approve
+terraform destroy -lock-timeout=5m -var-file="env/${ENVIRONMENT}.tfvars" -auto-approve
 
 echo "✅ ${ENVIRONMENT} environment has been torn down!"
 echo "💰 This should help save on cloud costs."

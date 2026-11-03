@@ -73,7 +73,7 @@ jobs:
         working-directory: ./terraform
         run: |
           set -o pipefail
-          terraform plan -var-file="env/dev.tfvars" -no-color 2>&1 | tee plan.txt
+          terraform plan -lock-timeout=5m -var-file="env/dev.tfvars" -no-color 2>&1 | tee plan.txt
 
       - name: Write plan summary
         if: always()
