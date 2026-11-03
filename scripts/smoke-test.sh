@@ -59,7 +59,7 @@ fi
 echo "Test 3: Verifying page content..."
 
 # Check for expected content markers
-EXPECTED_TEXTS=("Parker Lacy" "DevOps" "Cloud")
+EXPECTED_TEXTS=("Parker Lacy" "DevOps" "Platform")
 ALL_FOUND=true
 
 for TEXT in "${EXPECTED_TEXTS[@]}"; do

@@ -7,9 +7,10 @@ import { StaticRouter } from 'react-router-dom';
 import { AppRoutes } from './App';
 import ErrorBoundary from './components/ErrorBoundary';
 
-// Re-exported so prerender.mjs can drive route enumeration and per-route
-// <title>/description/canonical from this same data.
+// Re-exported so prerender.mjs can enumerate routes and build each route's
+// <head> tags from this same data.
 export { ROUTE_META } from './data/routeMeta';
+export { renderHead, canonicalUrl } from './seo/head';
 
 // Mirrors App.tsx's ErrorBoundary(Router(AppRoutes)) shape, with StaticRouter
 // standing in for BrowserRouter.

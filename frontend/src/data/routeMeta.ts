@@ -15,7 +15,7 @@ export const ROUTE_META: RouteMeta[] = [
   {
     path: ROUTES.HOME,
     title: APP_CONFIG.title,
-    description: APP_CONFIG.description[0],
+    description: APP_CONFIG.summary,
   },
   {
     path: ROUTES.ABOUT,

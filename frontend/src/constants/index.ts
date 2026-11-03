@@ -5,16 +5,22 @@ import adoIcon from '../assets/ado_logo.webp';
 import helmIcon from '../assets/helm_logo.png';
 import argoIcon from '../assets/argocd_logo.webp';
 
-// Application constants
+// Application constants. Single source for identity copy: the Home page,
+// per-route meta tags (src/seo/head.ts), and JSON-LD all read from here.
 export const APP_CONFIG = {
   name: 'Parker Lacy Portfolio',
-  title: 'Parker Lacy - Cloud/DevOps',
-  description: [
-    'Senior Cloud Engineer based in the Denver area. Proud dad, husband, and technology enthusiast.',
-    'I enjoy supporting development teams in building and maintaining cloud infrastructure, CI/CD pipelines, and automation solutions.',
-    'Outside of work, I can often be found spending time with family, out on the disc golf course, or enjoying a good videogame.',
-  ],
   author: 'Parker Lacy',
+  jobTitle: 'Senior DevOps / Platform Engineer',
+  title: 'Parker Lacy - Senior DevOps / Platform Engineer',
+  headline: 'Senior DevOps / Platform Engineer in Aurora, CO (Denver metro).',
+  intro:
+    'I work on the plumbing several dozen engineers rely on: clusters that scale themselves, build agents that patch and redeploy themselves every week, and audited access to production.',
+  personal:
+    "Outside of work, I'm a proud dad and husband, and can often be found spending time with family, out on the disc golf course, or enjoying a good videogame.",
+  // Meta / Open Graph description. Keep it under ~160 characters so search
+  // results and link previews don't truncate it.
+  summary:
+    'Senior DevOps / Platform Engineer in Aurora, CO (Denver metro), running Kubernetes, CI/CD, and access tooling for several dozen engineers.',
   url: 'https://parkerlacy.com',
 } as const;
 
@@ -29,6 +35,7 @@ export const ROUTES = {
 // External links
 export const EXTERNAL_LINKS = {
   GITHUB: 'https://github.com/placy2',
+  SITE_REPO: 'https://github.com/placy2/personal-website',
   KUBERNETES: 'https://kubernetes.io/',
   TERRAFORM: 'https://www.terraform.io/',
   AWS: 'https://aws.amazon.com/',

@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import type { ReactElement } from 'react';
 import { describe, it } from 'vitest';
 import Home from './Home';
@@ -7,10 +8,14 @@ import Projects from './Projects';
 import Resume from './Resume';
 import { expectNoA11yViolations } from '../test/axe';
 
-// Each page's main content is wrapped in a <main> landmark by App at
-// runtime, so wrap it here too to give axe an equivalent landmark context.
+// Each page's main content is wrapped in a <main> landmark (and a router) by
+// App at runtime, so wrap it here too to give axe an equivalent context.
 function renderInMain(ui: ReactElement) {
-  return render(<main>{ui}</main>);
+  return render(
+    <MemoryRouter>
+      <main>{ui}</main>
+    </MemoryRouter>
+  );
 }
 
 describe('Page accessibility', () => {
