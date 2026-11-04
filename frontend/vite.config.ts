@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { buildInfoDefines } from './build-info';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, isSsrBuild }) => {
@@ -57,6 +58,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     // Environment variables
     define: {
       __APP_VERSION__: JSON.stringify(env.VITE_APP_VERSION || '1.0.0'),
+      ...buildInfoDefines(),
     },
   };
 });
