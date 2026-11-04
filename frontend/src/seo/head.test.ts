@@ -35,4 +35,18 @@ describe('renderHead', () => {
     const data = JSON.parse(match![1]);
     expect(data.mainEntity.jobTitle).toBe(APP_CONFIG.jobTitle);
   });
+
+  it('marks case studies as articles authored by the site owner', () => {
+    const study = ROUTE_META.find(route => route.path.startsWith('/work/'))!;
+    const head = renderHead(study);
+    expect(head).toContain('<meta property="og:type" content="article" />');
+    const data = JSON.parse(head.match(/<script type="application\/ld\+json">(.*)<\/script>/)![1]);
+    expect(data['@type']).toBe('Article');
+    expect(data.headline).toBe(study.title);
+    expect(data.author.name).toBe(APP_CONFIG.author);
+  });
+
+  it('keeps every other page a profile', () => {
+    expect(renderHead(home)).toContain('<meta property="og:type" content="profile" />');
+  });
 });
