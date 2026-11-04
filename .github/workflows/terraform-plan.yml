@@ -23,7 +23,7 @@ permissions:
 
 env:
   NODE_VERSION: "26"
-  TERRAFORM_VERSION: "1.13.5"
+  TERRAFORM_VERSION: "1.17.1"
 
 jobs:
   terraform-plan:
