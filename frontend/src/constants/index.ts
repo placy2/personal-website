@@ -28,9 +28,12 @@ export const APP_CONFIG = {
 export const ROUTES = {
   HOME: '/',
   ABOUT: '/about',
+  WORK: '/work',
   PROJECTS: '/projects',
   RESUME: '/resume',
 } as const;
+
+export const workPath = (slug: string): string => `${ROUTES.WORK}/${slug}`;
 
 // External links
 export const EXTERNAL_LINKS = {

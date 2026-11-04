@@ -22,25 +22,36 @@ export function renderHead(route: RouteMeta): string {
   const description = escapeHtml(route.description);
   const url = canonicalUrl(route.path);
 
+  const type = route.type ?? 'profile';
+
   const person = {
-    '@context': 'https://schema.org',
-    '@type': 'ProfilePage',
-    mainEntity: {
-      '@type': 'Person',
-      name: APP_CONFIG.author,
-      url: APP_CONFIG.url,
-      jobTitle: APP_CONFIG.jobTitle,
-      description: APP_CONFIG.summary,
-      image: OG_IMAGE,
-      sameAs: [EXTERNAL_LINKS.GITHUB],
-    },
+    '@type': 'Person',
+    name: APP_CONFIG.author,
+    url: APP_CONFIG.url,
+    jobTitle: APP_CONFIG.jobTitle,
+    description: APP_CONFIG.summary,
+    image: OG_IMAGE,
+    sameAs: [EXTERNAL_LINKS.GITHUB],
   };
+
+  const structuredData =
+    type === 'article'
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'Article',
+          headline: route.title,
+          description: route.description,
+          url,
+          image: OG_IMAGE,
+          author: person,
+        }
+      : { '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: person };
 
   return [
     `<title>${title}</title>`,
     `<meta name="description" content="${description}" />`,
     `<link rel="canonical" href="${url}" />`,
-    `<meta property="og:type" content="profile" />`,
+    `<meta property="og:type" content="${type}" />`,
     `<meta property="og:site_name" content="${escapeHtml(APP_CONFIG.name)}" />`,
     `<meta property="og:title" content="${title}" />`,
     `<meta property="og:description" content="${description}" />`,
@@ -50,6 +61,6 @@ export function renderHead(route: RouteMeta): string {
     `<meta name="twitter:title" content="${title}" />`,
     `<meta name="twitter:description" content="${description}" />`,
     `<meta name="twitter:image" content="${OG_IMAGE}" />`,
-    `<script type="application/ld+json">${jsonLd(person)}</script>`,
+    `<script type="application/ld+json">${jsonLd(structuredData)}</script>`,
   ].join('\n    ');
 }

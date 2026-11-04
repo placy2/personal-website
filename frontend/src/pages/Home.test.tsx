@@ -23,12 +23,9 @@ describe('Home Component', () => {
     expect(screen.getByText(APP_CONFIG.headline)).toBeInTheDocument();
   });
 
-  it('links to projects and to the site repo', () => {
+  it('links to work and to the site repo', () => {
     renderHome();
-    expect(screen.getByRole('link', { name: 'See my projects' })).toHaveAttribute(
-      'href',
-      '/projects'
-    );
+    expect(screen.getByRole('link', { name: 'See my work' })).toHaveAttribute('href', '/work');
     expect(screen.getByRole('link', { name: 'How this site runs' })).toHaveAttribute(
       'href',
       EXTERNAL_LINKS.SITE_REPO

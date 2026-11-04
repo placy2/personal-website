@@ -4,6 +4,8 @@ import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-route
 import MenuBar from './components/MenuBar';
 import Home from './pages/Home';
 import About from './pages/About';
+import Work from './pages/Work';
+import CaseStudy from './pages/CaseStudy';
 import Projects from './pages/Projects';
 import Resume from './pages/Resume';
 import Footer from './components/Footer';
@@ -28,6 +30,8 @@ export const AppRoutes: React.FC = () => {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/work" element={<Work />} />
+            <Route path="/work/:slug" element={<CaseStudy />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/resume" element={<Resume />} />
           </Routes>

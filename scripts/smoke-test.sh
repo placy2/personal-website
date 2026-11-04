@@ -147,6 +147,41 @@ else
   exit 1
 fi
 
+# Test 9: every route in the sitemap serves its own prerendered page. In prod a
+# CloudFront Function rewrites /<path> to /<path>/index.html; dev's S3 website
+# endpoint redirects /<path> to /<path>/ and serves the index document (hence
+# -L). If either breaks, routes silently fall back to the home page's HTML and
+# link previews for /work/<slug> show the wrong title and description.
+echo "Test 9: Checking each sitemap route serves its own page..."
+SITEMAP_LOCS=$(curl -s "$URL/sitemap.xml" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g')
+
+if [ -z "$SITEMAP_LOCS" ]; then
+  echo -e "${RED}✗ sitemap.xml lists no routes${NC}"
+  exit 1
+fi
+
+for LOC in $SITEMAP_LOCS; do
+  # Locs use the canonical domain; swap it for the URL under test.
+  ROUTE_PATH="/${LOC#*://*/}"
+  [ "$LOC" = "${LOC#*://*/}" ] && ROUTE_PATH="/"
+  [ "$ROUTE_PATH" = "/" ] && continue
+
+  ROUTE_RESPONSE=$(curl -sL -w "\n%{http_code}" "${URL%/}$ROUTE_PATH")
+  ROUTE_STATUS=$(echo "$ROUTE_RESPONSE" | tail -n 1)
+  ROUTE_BODY=$(echo "$ROUTE_RESPONSE" | sed '$d' | tr '\n' ' ')
+
+  if [ "$ROUTE_STATUS" != "200" ]; then
+    echo -e "${RED}✗ $ROUTE_PATH returned $ROUTE_STATUS (expected 200)${NC}"
+    exit 1
+  fi
+  if echo "$ROUTE_BODY" | grep -qF "data-prerendered-route=\"$ROUTE_PATH\""; then
+    echo -e "${GREEN}✓ $ROUTE_PATH serves its own prerendered page${NC}"
+  else
+    echo -e "${RED}✗ $ROUTE_PATH served another route's HTML (routing rewrite broken?)${NC}"
+    exit 1
+  fi
+done
+
 echo "----------------------------------------"
 if [ "$ALL_FOUND" = true ]; then
   echo -e "${GREEN}✅ All smoke tests passed!${NC}"

@@ -17,7 +17,7 @@ describe('App Component', () => {
     render(<App />);
     const nav = screen.getByRole('navigation');
     expect(nav).toBeInTheDocument();
-    for (const label of ['Home', 'About', 'Projects', 'Resume']) {
+    for (const label of ['Home', 'About', 'Work', 'Projects', 'Resume']) {
       expect(screen.getByRole('link', { name: label })).toBeInTheDocument();
     }
   });

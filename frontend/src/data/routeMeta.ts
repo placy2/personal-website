@@ -1,9 +1,13 @@
-import { APP_CONFIG, ROUTES } from '../constants';
+import { APP_CONFIG, ROUTES, workPath } from '../constants';
+import { CASE_STUDIES } from './caseStudies';
 
 export interface RouteMeta {
   path: string;
   title: string;
   description: string;
+  // Open Graph / JSON-LD page type. Defaults to 'profile'; case studies are
+  // 'article' so link previews and search treat them as standalone write-ups.
+  type?: 'profile' | 'article';
 }
 
 /**
@@ -23,6 +27,19 @@ export const ROUTE_META: RouteMeta[] = [
     description:
       "Parker Lacy's background: a Computer Science degree from Trinity University, a start in tech consulting, and a move into cloud engineering and DevOps.",
   },
+  {
+    path: ROUTES.WORK,
+    title: `Work - ${APP_CONFIG.author}`,
+    description:
+      'Short case studies of platform work Parker Lacy has led: what the problem was, what he built, and what changed.',
+  },
+  // One page per case study; the summary doubles as the meta description.
+  ...CASE_STUDIES.map(study => ({
+    path: workPath(study.slug),
+    title: `${study.title} - ${APP_CONFIG.author}`,
+    description: study.summary,
+    type: 'article' as const,
+  })),
   {
     path: ROUTES.PROJECTS,
     title: `Projects - ${APP_CONFIG.author}`,

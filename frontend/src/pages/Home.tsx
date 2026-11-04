@@ -20,10 +20,10 @@ const Home: React.FC = () => {
         <p>{APP_CONFIG.intro}</p>
         <p>{APP_CONFIG.personal}</p>
       </div>
-      {/* TODO: point these at /work and /architecture once those pages exist. */}
+      {/* TODO: point the second button at /architecture once that page exists. */}
       <div className="home-actions">
-        <Link className="button" to={ROUTES.PROJECTS}>
-          See my projects
+        <Link className="button" to={ROUTES.WORK}>
+          See my work
         </Link>
         <a
           className="button button-secondary"

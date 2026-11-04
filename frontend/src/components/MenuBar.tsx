@@ -32,6 +32,7 @@ const MenuBar: React.FC = () => {
       <ul id="primary-menu" className={isMenuOpen ? 'show' : ''}>
         <MenuItem to={ROUTES.HOME} label="Home" onClick={closeMenu} />
         <MenuItem to={ROUTES.ABOUT} label="About" onClick={closeMenu} />
+        <MenuItem to={ROUTES.WORK} label="Work" onClick={closeMenu} />
         <MenuItem to={ROUTES.PROJECTS} label="Projects" onClick={closeMenu} />
         <MenuItem to={ROUTES.RESUME} label="Resume" onClick={closeMenu} />
       </ul>
