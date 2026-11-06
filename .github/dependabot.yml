@@ -36,6 +36,15 @@ updates:
       # peerDependencies.
       - dependency-name: "typescript"
         versions: [">=6.1.0"]
+      # vitest 5 inlines `expect`, so @testing-library/jest-dom's matcher type
+      # augmentations no longer apply and `tsc -b` fails with TS2339 (see
+      # PR #185). The @vitest/* plugins are peer-locked to vitest's major, so
+      # they are held back too. Remove this ignore once @testing-library/jest-dom
+      # supports vitest 5.
+      - dependency-name: "vitest"
+        versions: [">=5.0.0"]
+      - dependency-name: "@vitest/*"
+        versions: [">=5.0.0"]
 
   # GitHub Actions
   - package-ecosystem: "github-actions"
