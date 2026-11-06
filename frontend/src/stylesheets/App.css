@@ -160,6 +160,11 @@ footer a {
   text-decoration: underline;
 }
 
+.footer-build {
+  margin-top: var(--space-1);
+  font-size: 0.75rem;
+}
+
 /* Media Queries */
 @media (max-width: 768px) {
   .headshot {

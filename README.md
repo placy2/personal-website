@@ -1,5 +1,16 @@
 # Personal Website
 
+[![Deploy](https://github.com/placy2/personal-website/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/placy2/personal-website/actions/workflows/deploy.yml)
+[![PR Validation](https://github.com/placy2/personal-website/actions/workflows/pr-validate.yml/badge.svg)](https://github.com/placy2/personal-website/actions/workflows/pr-validate.yml)
+[![Lighthouse CI](https://github.com/placy2/personal-website/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/placy2/personal-website/actions/workflows/lighthouse.yml)
+[![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot&logoColor=white)](https://github.com/placy2/personal-website/blob/main/.github/dependabot.yml)
+
+![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
+![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
+![Terraform ≥1.13](https://img.shields.io/badge/Terraform-%E2%89%A51.13-844FBA?logo=terraform&logoColor=white)
+![AWS S3 + CloudFront](https://img.shields.io/badge/AWS-S3%20%2B%20CloudFront-232F3E?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xOS4zNSAxMC4wNEE3LjQ5IDcuNDkgMCAwIDAgMTIgNEM5LjExIDQgNi42IDUuNjQgNS4zNSA4LjA0QTUuOTk0IDUuOTk0IDAgMCAwIDAgMTRjMCAzLjMxIDIuNjkgNiA2IDZoMTNjMi43NiAwIDUtMi4yNCA1LTUgMC0yLjY0LTIuMDUtNC43OC00LjY1LTQuOTZ6Ii8+PC9zdmc+)
+
 An evolving personal portfolio website for [parkerlacy.com](https://parkerlacy.com), showcasing cloud engineering expertise with a focus on modern development practices and cost-effective infrastructure.
 
 ## 🚀 Quick Start
@@ -26,12 +37,12 @@ npm run dev
 
 ## 🏗️ Architecture
 
-- **Frontend**: React 18 + TypeScript + Vite
+- **Frontend**: React 19 + TypeScript + Vite
 - **Styling**: CSS with custom properties
 - **Infrastructure**: AWS S3 + CloudFront + Route 53
 - **IaC**: Terraform with environment-specific configurations
 - **CI/CD**: GitHub Actions with automated testing and deployment
-- **Testing**: Vitest + React Testing Library
+- **Testing**: Vitest + React Testing Library (unit), Playwright (e2e against the production build), Lighthouse CI (perf/a11y/SEO)
 - **Containerization Options**: Docker Compose w/ dev & prod configuration options
 
 ## 📁 Project Structure

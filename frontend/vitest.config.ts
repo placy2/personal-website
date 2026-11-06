@@ -1,9 +1,11 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
+import { buildInfoDefines } from './build-info';
 
 export default defineConfig({
   plugins: [react()],
+  define: buildInfoDefines(),
   test: {
     globals: true,
     environment: 'jsdom',
