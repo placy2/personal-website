@@ -1,0 +1,532 @@
+/* DiscOrbit — decorative disc-golf band for the Home page.
+   The artboard is a fixed 560x280 scene that DiscOrbit.tsx scales down via --dgo-s
+   on narrow screens; the controls row sits outside it so the tap target stays full size.
+   All colors come from the design tokens in index.css. */
+
+.dgo {
+  --dgo-throw-duration: 2.8s;
+  --dgo-orbit-duration: 18s;
+  position: relative;
+  width: 100%;
+  max-width: 560px;
+  height: calc(280px * var(--dgo-s, 1) + 52px);
+  margin: var(--space-5) auto 0;
+  overflow: hidden;
+  color: var(--theme-white);
+}
+
+.dgo-stage {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 560px;
+  height: 280px;
+  margin-left: -280px;
+  transform: scale(var(--dgo-s, 1));
+  transform-origin: top center;
+}
+
+/* ---------- floor + props ---------- */
+
+.dgo-floor {
+  position: absolute;
+  left: -60px;
+  right: -60px;
+  bottom: 0;
+  height: 150px;
+  background:
+    repeating-linear-gradient(90deg, var(--theme-purple) 0 1px, transparent 1px 40px),
+    repeating-linear-gradient(0deg, var(--theme-purple) 0 1px, transparent 1px 40px);
+  opacity: 0.35;
+  transform: perspective(240px) rotateX(64deg);
+  transform-origin: 50% 100%;
+  mask-image: radial-gradient(ellipse 60% 100% at 50% 100%, #000 30%, transparent 75%);
+  animation: dgo-floor 2.4s linear infinite;
+}
+
+.dgo-props {
+  position: absolute;
+  inset: 0;
+  width: 560px;
+  height: 280px;
+  overflow: visible;
+  filter: drop-shadow(0 0 5px var(--theme-purple));
+}
+
+.dgo-props-lines {
+  fill: none;
+  stroke: var(--theme-light-purple);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dgo-tee {
+  fill: var(--theme-purple);
+  fill-opacity: 0.35;
+}
+
+.dgo-chains {
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+
+.dgo-tray-front {
+  fill: var(--theme-surface);
+  fill-opacity: 0.75;
+  stroke: var(--theme-light-purple);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+
+/* ---------- orbit scene ---------- */
+
+.dgo-scene {
+  position: absolute;
+  left: 160px;
+  top: 8px;
+  width: 240px;
+  height: 240px;
+  perspective: 900px;
+  transform-style: preserve-3d;
+}
+
+.dgo-glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 200px;
+  height: 200px;
+  margin: -100px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--theme-purple), transparent 65%);
+  opacity: 0.35;
+  animation: dgo-pulse 4s ease-in-out infinite;
+}
+
+.dgo-disc {
+  position: absolute;
+  left: 68px;
+  top: 68px;
+  width: 104px;
+  height: 104px;
+  filter: drop-shadow(0 0 12px var(--theme-purple));
+}
+
+.dgo-disc svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  animation: dgo-rot 4s linear infinite;
+}
+
+.dgo-disc::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 26%, rgb(255 255 255 / 40%), transparent 38%);
+}
+
+.dgo-disc-lines {
+  fill: none;
+  stroke: var(--theme-white);
+}
+
+.dgo-disc-text {
+  font-family: Inter, system-ui, sans-serif;
+  font-size: 7px;
+  font-weight: 800;
+  fill: var(--theme-white);
+}
+
+.dgo-plane {
+  position: absolute;
+  inset: 0;
+  transform: rotateX(72deg);
+  transform-style: preserve-3d;
+}
+
+.dgo-ring {
+  position: absolute;
+  inset: 12px;
+  border-radius: 50%;
+  border: 1.5px solid var(--theme-light-purple);
+  opacity: 0.6;
+  box-shadow: 0 0 10px var(--theme-purple);
+}
+
+/* Each arm starts at its own --a angle; its logo counter-rotates to face the viewer. */
+.dgo-arm {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: rotateZ(var(--a));
+  animation: dgo-orbit var(--dgo-orbit-duration) linear infinite;
+}
+
+.dgo-sat {
+  position: absolute;
+  left: 50%;
+  top: 12px;
+  width: 42px;
+  height: 42px;
+  margin: -21px 0 0 -21px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--theme-surface);
+  border: 1.5px solid var(--theme-purple);
+  box-shadow: 0 0 8px -2px var(--theme-purple);
+  transform: rotateZ(calc(var(--a) * -1)) rotateX(-72deg);
+  animation: dgo-face var(--dgo-orbit-duration) linear infinite;
+}
+
+.dgo-sat img {
+  display: block;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+/* ---------- ACE overlay ---------- */
+
+.dgo-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    circle at 86% 55%,
+    var(--theme-white),
+    var(--theme-purple) 30%,
+    transparent 60%
+  );
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dgo-ace {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 40px;
+  text-align: center;
+  font:
+    italic 900 46px/1 Inter,
+    system-ui,
+    sans-serif;
+  letter-spacing: 2px;
+  text-shadow:
+    -3px 0 var(--theme-light-purple),
+    3px 0 var(--theme-purple),
+    0 0 18px var(--theme-purple);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.dgo-ace small {
+  display: block;
+  margin: var(--space-2) 0;
+  font:
+    normal 700 11px Inter,
+    system-ui,
+    sans-serif;
+  letter-spacing: 5px;
+  color: var(--theme-light-purple);
+  text-shadow: none;
+}
+
+/* ---------- controls ---------- */
+
+.dgo-ui {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 44px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.dgo-throw {
+  min-height: 40px;
+  padding: 0 22px;
+  border-radius: 999px;
+  border: 2px solid var(--theme-purple);
+  background: transparent;
+  color: var(--theme-white);
+  font:
+    700 12px Inter,
+    system-ui,
+    sans-serif;
+  letter-spacing: 3px;
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--theme-purple);
+  transition:
+    background-color 200ms ease,
+    opacity 200ms ease;
+}
+
+.dgo-throw:hover,
+.dgo-throw:focus-visible {
+  background-color: var(--theme-purple);
+  outline: none;
+}
+
+.dgo-throw[aria-disabled='true'] {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dgo-aces {
+  font:
+    600 12px Inter,
+    system-ui,
+    sans-serif;
+  letter-spacing: 2px;
+  color: var(--theme-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dgo-aces b {
+  color: var(--theme-white);
+}
+
+/* ---------- throw sequence (while .is-throwing is set) ---------- */
+
+.dgo.is-throwing .dgo-plane {
+  animation: dgo-collapse var(--dgo-throw-duration) ease-in-out;
+}
+
+.dgo.is-throwing .dgo-glow {
+  animation: dgo-dim var(--dgo-throw-duration) ease-in-out;
+}
+
+.dgo.is-throwing .dgo-disc {
+  animation: dgo-throw var(--dgo-throw-duration) linear;
+}
+
+.dgo.is-throwing .dgo-disc svg {
+  animation-duration: 0.35s;
+}
+
+.dgo.is-throwing .dgo-chains {
+  animation: dgo-chain var(--dgo-throw-duration) linear;
+}
+
+.dgo.is-throwing .dgo-flash {
+  animation: dgo-flash var(--dgo-throw-duration) linear;
+}
+
+.dgo.is-throwing .dgo-ace {
+  animation: dgo-ace var(--dgo-throw-duration) linear;
+}
+
+/* Offscreen: pause everything (toggled by an IntersectionObserver). */
+.dgo.is-paused *,
+.dgo.is-paused *::after {
+  animation-play-state: paused !important;
+}
+
+/* Reduced motion: static orbit; the throw still plays because the user asked for it. */
+@media (prefers-reduced-motion: reduce) {
+  .dgo-floor,
+  .dgo-glow,
+  .dgo-disc svg,
+  .dgo-arm,
+  .dgo-sat {
+    animation: none !important;
+  }
+}
+
+/* ---------- keyframes ---------- */
+
+@keyframes dgo-floor {
+  to {
+    background-position:
+      0 0,
+      0 40px;
+  }
+}
+
+@keyframes dgo-pulse {
+  50% {
+    transform: scale(1.1);
+    opacity: 0.22;
+  }
+}
+
+@keyframes dgo-rot {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes dgo-orbit {
+  from {
+    transform: rotateZ(var(--a));
+  }
+  to {
+    transform: rotateZ(calc(var(--a) + 360deg));
+  }
+}
+
+@keyframes dgo-face {
+  from {
+    transform: rotateZ(calc(var(--a) * -1)) rotateX(-72deg);
+  }
+  to {
+    transform: rotateZ(calc(var(--a) * -1 - 360deg)) rotateX(-72deg);
+  }
+}
+
+@keyframes dgo-collapse {
+  0% {
+    opacity: 1;
+    transform: rotateX(72deg) scale(1);
+  }
+  12%,
+  86% {
+    opacity: 0;
+    transform: rotateX(72deg) scale(0.3);
+  }
+  100% {
+    opacity: 1;
+    transform: rotateX(72deg) scale(1);
+  }
+}
+
+@keyframes dgo-dim {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  12%,
+  86% {
+    opacity: 0;
+  }
+}
+
+/* Center -> tee (left) -> low, flat line -> chains (right) -> drop into tray -> reset.
+   One transform list per keyframe: some CSS minifiers drop `translate`/`scale` when
+   they share a keyframe with `transform`. */
+@keyframes dgo-throw {
+  0% {
+    transform: translate(0px, 0px) scale(1) rotateX(0deg);
+    opacity: 1;
+    animation-timing-function: ease-in-out;
+  }
+  14% {
+    transform: translate(-208px, 86px) scale(0.36) rotateX(0deg);
+  }
+  22% {
+    transform: translate(-222px, 90px) scale(0.36) rotateX(55deg);
+    animation-timing-function: ease-in;
+  }
+  26% {
+    transform: translate(-208px, 86px) scale(0.36) rotateX(62deg);
+    animation-timing-function: linear;
+  }
+  33% {
+    transform: translate(-110px, 64px) scale(0.36) rotateX(62deg);
+  }
+  40% {
+    transform: translate(-10px, 47px) scale(0.36) rotateX(62deg);
+  }
+  47% {
+    transform: translate(92px, 35px) scale(0.36) rotateX(62deg);
+  }
+  54% {
+    transform: translate(202px, 30px) scale(0.36) rotateX(62deg);
+    animation-timing-function: ease-in;
+  }
+  61% {
+    transform: translate(202px, 68px) scale(0.36) rotateX(76deg);
+  }
+  82% {
+    transform: translate(202px, 68px) scale(0.36) rotateX(76deg);
+    opacity: 1;
+  }
+  88% {
+    transform: translate(202px, 68px) scale(0.36) rotateX(76deg);
+    opacity: 0;
+  }
+  90% {
+    transform: translate(0px, 0px) scale(0.2) rotateX(0deg);
+    opacity: 0;
+    animation-timing-function: ease-out;
+  }
+  100% {
+    transform: translate(0px, 0px) scale(1) rotateX(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes dgo-chain {
+  0%,
+  54% {
+    transform: rotate(0);
+  }
+  57% {
+    transform: rotate(8deg);
+  }
+  60% {
+    transform: rotate(-6deg);
+  }
+  63% {
+    transform: rotate(4deg);
+  }
+  66% {
+    transform: rotate(-2deg);
+  }
+  69%,
+  100% {
+    transform: rotate(0);
+  }
+}
+
+@keyframes dgo-flash {
+  0%,
+  53.5% {
+    opacity: 0;
+  }
+  55% {
+    opacity: 0.5;
+  }
+  64%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes dgo-ace {
+  0%,
+  55% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  59% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+  62% {
+    transform: scale(1) translateX(0);
+  }
+  64% {
+    transform: translateX(-3px);
+  }
+  65% {
+    transform: translateX(3px);
+  }
+  66%,
+  82% {
+    opacity: 1;
+    transform: scale(1) translateX(0);
+  }
+  90%,
+  100% {
+    opacity: 0;
+    transform: scale(1.08);
+  }
+}

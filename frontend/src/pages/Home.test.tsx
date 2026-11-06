@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
 import Home from '../pages/Home';
@@ -44,5 +44,21 @@ describe('Home Component', () => {
     const kubernetesLink = screen.getByRole('link', { name: /kubernetes/i });
     expect(kubernetesLink).toHaveAttribute('href', 'https://kubernetes.io/');
     expect(kubernetesLink).toHaveAttribute('target', '_blank');
+  });
+
+  it('hides the disc-golf easter egg until the toggle is pressed, then lets you go back', () => {
+    const { container } = renderHome();
+    const toggle = screen.getByRole('button', { name: /fore.*disc golf mode/i });
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    expect(container.querySelector('.dgo')).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    expect(container.querySelector('.dgo')).not.toBeNull();
+    expect(screen.queryByRole('link', { name: 'Kubernetes' })).toBeNull();
+
+    fireEvent.click(toggle);
+    expect(container.querySelector('.dgo')).toBeNull();
+    expect(screen.getByRole('link', { name: 'Kubernetes' })).toBeInTheDocument();
   });
 });
