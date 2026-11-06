@@ -11,7 +11,7 @@ Personal portfolio site for parkerlacy.com. React 19 + TypeScript + Vite SPA in 
 All frontend commands run from `frontend/`:
 
 ```bash
-npm run dev            # Dev server at http://localhost:5173 (or ./scripts/dev-setup.sh / docker-compose up for Docker)
+npm run dev            # Dev server at http://localhost:5173
 npm run build          # tsc -b && vite build → dist/
 npm run lint           # eslint .   (lint:fix to auto-fix)
 npm run format:check   # prettier   (format to write)

@@ -21,11 +21,6 @@ and assume they are run from anywhere in the repo (they `cd` relative to their o
 - **Node.js + npm**, only if `frontend/dist` doesn't exist yet — `deploy.sh` will run
   `npm run build` for you in that case.
 
-### For `dev-setup.sh`
-
-- **Docker** and **Docker Compose** (the `docker compose` CLI plugin, not the legacy
-  `docker-compose` binary).
-
 ### For `smoke-test.sh`
 
 - `curl` (no other dependencies). No AWS credentials required — it just hits the public URL.
@@ -96,23 +91,6 @@ incurs small S3 costs. `prod` teardown works the same way but will take down the
 CloudFront distribution, and (since `aws_route53_zone` is only created `count = var.environment ==
 "prod" ? 1 : 0`) the Route 53 hosted zone — recreating a hosted zone means new nameservers, which
 you'd need to update at your domain registrar. Avoid tearing down prod casually.
-
-### `dev-setup.sh` — one-command local dev environment via Docker
-
-```bash
-./scripts/dev-setup.sh
-```
-
-Takes no arguments. What it does:
-1. Verifies `docker` and `docker compose` are installed (exits with a clear error if not).
-2. Copies `.env.example` → `.env.local` if `.env.local` doesn't exist yet (won't overwrite an
-   existing one).
-3. Runs `docker compose up --build -d` from the repo root (uses whatever `docker-compose.yml` /
-   `Dockerfile.dev` is configured there).
-4. Prints the local URL (`http://localhost:5173`) and a cheat-sheet of follow-up commands
-   (`docker compose logs -f`, `docker compose down`, etc).
-
-No cloud credentials needed — this is purely local.
 
 ### `smoke-test.sh` — post-deploy validation against a live URL
 

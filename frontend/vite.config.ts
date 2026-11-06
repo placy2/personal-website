@@ -37,8 +37,8 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     // Development server configuration
     server: {
       port: 5173,
-      host: true, // Allow external connections (for Docker)
-      open: false, // Don't auto-open browser in container
+      host: true, // Listen on all interfaces (e.g. test from a phone on the LAN)
+      open: false, // Don't auto-open a browser
       hmr: {
         port: 5173,
       },
