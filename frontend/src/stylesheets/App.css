@@ -116,6 +116,75 @@
   filter: drop-shadow(0 0 1em var(--theme-purple));
 }
 
+/* Easter-egg toggle under the tools grid: swaps the linked logos for the
+   disc-golf orbit. Wiggles briefly every few seconds to hint it is clickable. */
+.disc-toggle {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 44px;
+  min-height: 44px;
+  margin-top: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--theme-muted);
+  cursor: pointer;
+  transition: color 300ms ease;
+}
+
+.disc-toggle svg {
+  animation: disc-wiggle 6s ease-in-out 3s infinite;
+}
+
+.disc-toggle-label {
+  font-size: var(--text-sm);
+  font-style: italic;
+  letter-spacing: 0.05em;
+}
+
+.disc-toggle:hover,
+.disc-toggle.is-active {
+  color: var(--theme-light-purple);
+}
+
+.disc-toggle:focus-visible {
+  outline: 2px solid var(--theme-light-purple);
+  outline-offset: 2px;
+}
+
+.disc-toggle.is-active svg {
+  animation: none;
+}
+
+@keyframes disc-wiggle {
+  0%,
+  14%,
+  100% {
+    transform: rotate(0);
+  }
+  3% {
+    transform: rotate(-18deg);
+  }
+  6% {
+    transform: rotate(14deg);
+  }
+  9% {
+    transform: rotate(-10deg);
+  }
+  12% {
+    transform: rotate(6deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disc-toggle svg {
+    animation: none;
+  }
+}
+
 /* BUTTONS */
 
 .button {
