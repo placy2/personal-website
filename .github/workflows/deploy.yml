@@ -26,7 +26,7 @@ on:
 
 env:
   NODE_VERSION: "26"
-  TERRAFORM_VERSION: "1.13.5"
+  TERRAFORM_VERSION: "1.17.1"
 
 jobs:
   detect-changes:
@@ -126,6 +126,50 @@ jobs:
           echo "  - Frontend application (/frontend)"
           echo "  - Terraform infrastructure (/terraform)"
           echo "  - Deployment workflows (/.github/workflows)"
+
+  cancel-superseded:
+    name: Cancel Superseded Deploys
+    runs-on: ubuntu-latest
+    needs: detect-changes
+    # Only a run that will itself deploy main to both environments may
+    # supersede older ones; a docs-only push (no meaningful changes) or a
+    # single-environment dispatch must not cancel a real pending deploy.
+    if: >
+      needs.detect-changes.outputs.has-meaningful-changes == 'true' &&
+      github.ref == 'refs/heads/main' &&
+      (
+        github.event_name == 'push' ||
+        (github.event_name == 'workflow_dispatch' && inputs.deploy_to_dev == true && inputs.deploy_to_prod == true)
+      )
+    permissions:
+      actions: write
+    steps:
+      - name: Cancel older queued or approval-waiting runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          WORKFLOW_ID=$(gh api "repos/$REPO/actions/runs/$RUN_ID" -q .workflow_id)
+          # Older runs on main that haven't finished.
+          OLDER=$(gh api "repos/$REPO/actions/workflows/$WORKFLOW_ID/runs?branch=main&per_page=50" \
+            -q ".workflow_runs[] | select(.id < $RUN_ID and .status != \"completed\") | \"\(.id) \(.status)\"")
+          [ -z "$OLDER" ] && { echo "Nothing to supersede."; exit 0; }
+
+          while read -r id status; do
+            # Never interrupt a Terraform job mid-flight (plan holds the state
+            # lock; apply could leave a partial deploy). Waiting-for-approval
+            # and concurrency-queued jobs aren't in_progress, so they're fair game.
+            busy=$(gh api "repos/$REPO/actions/runs/$id/jobs?per_page=50" \
+              -q '[.jobs[] | select(.status == "in_progress" and (.name | test("Terraform|Deploy")))] | length')
+            if [ "$busy" != "0" ]; then
+              echo "::notice::Run $id ($status) has a Terraform job in progress; leaving it alone."
+              continue
+            fi
+            echo "Cancelling superseded run $id ($status)"
+            gh run cancel "$id" -R "$REPO" || echo "::warning::Could not cancel run $id"
+          done <<< "$OLDER"
 
   test:
     name: Test Frontend
