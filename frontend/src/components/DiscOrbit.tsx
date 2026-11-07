@@ -8,6 +8,8 @@ const STAGE_WIDTH = 560;
 const THROW_MS = 2800;
 /** Point in the throw where the disc hits the chains (54% keyframe). */
 const ACE_AT_MS = THROW_MS * 0.54;
+/** Chance a throw is an ace; every other throw flies past it. */
+const ACE_ODDS = 1 / 3;
 
 export interface OrbitLogo {
   name: string;
@@ -23,7 +25,8 @@ interface DiscOrbitProps {
 
 /**
  * Decorative disc-golf band: a stamped disc with tool logos orbiting it, a tee,
- * and a basket. "Throw" sends the disc on a low line into the chains.
+ * and a basket. "Throw" sends the disc on a low line at the basket: 1 in 5 throws
+ * is an ace, the rest sail past.
  * The scene is aria-hidden; only the button and ace counter are exposed.
  */
 const DiscOrbit: React.FC<DiscOrbitProps> = ({
@@ -33,6 +36,7 @@ const DiscOrbit: React.FC<DiscOrbitProps> = ({
   const rootRef = useRef<HTMLDivElement>(null);
   const aceTimer = useRef<number | undefined>(undefined);
   const [isThrowing, setIsThrowing] = useState(false);
+  const [isAce, setIsAce] = useState(false);
   const [aces, setAces] = useState(0);
 
   // SVG ids must be unique per instance and safe inside url(#...).
@@ -78,8 +82,10 @@ const DiscOrbit: React.FC<DiscOrbitProps> = ({
 
   const handleThrow = () => {
     if (isThrowing) return;
+    const ace = Math.random() < ACE_ODDS;
+    setIsAce(ace);
     setIsThrowing(true);
-    aceTimer.current = window.setTimeout(() => setAces(n => n + 1), ACE_AT_MS);
+    if (ace) aceTimer.current = window.setTimeout(() => setAces(n => n + 1), ACE_AT_MS);
   };
 
   const handleDiscAnimationEnd = (event: React.AnimationEvent<HTMLDivElement>) => {
@@ -87,7 +93,10 @@ const DiscOrbit: React.FC<DiscOrbitProps> = ({
   };
 
   return (
-    <div ref={rootRef} className={`dgo${isThrowing ? ' is-throwing' : ''}`}>
+    <div
+      ref={rootRef}
+      className={`dgo${isThrowing ? ` is-throwing ${isAce ? 'is-ace' : 'is-miss'}` : ''}`}
+    >
       <div className="dgo-stage" aria-hidden="true">
         <div className="dgo-floor" />
 
@@ -170,8 +179,11 @@ const DiscOrbit: React.FC<DiscOrbitProps> = ({
         </svg>
 
         <div className="dgo-flash" />
+        <div className="dgo-missed">
+          MISS<small>try again?</small>
+        </div>
         <div className="dgo-ace">
-          <small>DEPLOYED</small>ACE<small>TO PROD</small>
+          ACE<small>DEPLOYED TO PROD</small>
         </div>
       </div>
 

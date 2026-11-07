@@ -23,6 +23,7 @@ function endAnimation(el: HTMLElement, animationName: string) {
 
 describe('DiscOrbit', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
     vi.useRealTimers();
   });
 
@@ -51,6 +52,7 @@ describe('DiscOrbit', () => {
 
   it('counts an ace once the disc reaches the chains', () => {
     vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.1);
     render(<DiscOrbit />);
     fireEvent.click(screen.getByRole('button', { name: /throw the disc/i }));
     expect(screen.getByText(/aces/i)).toHaveTextContent('ACES 0');
@@ -59,6 +61,20 @@ describe('DiscOrbit', () => {
       vi.advanceTimersByTime(2000);
     });
     expect(screen.getByText(/aces/i)).toHaveTextContent('ACES 1');
+  });
+
+  it('misses (no ace counted) on most throws', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, 'random').mockReturnValue(0.5);
+    const { container } = render(<DiscOrbit />);
+    fireEvent.click(screen.getByRole('button', { name: /throw the disc/i }));
+    expect(getRoot(container)).toHaveClass('is-miss');
+    expect(getRoot(container)).not.toHaveClass('is-ace');
+
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    expect(screen.getByText(/aces/i)).toHaveTextContent('ACES 0');
   });
 
   it('has no WCAG A/AA violations', async () => {
