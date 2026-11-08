@@ -24,8 +24,8 @@ on:
     - cron: '0 6 * * *'
 
 env:
-  TERRAFORM_VERSION: "1.13.5"
   STALE_AFTER_DAYS: 30
+  TERRAFORM_VERSION: "1.17.1"
 
 jobs:
   check-last-deploy:

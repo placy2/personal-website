@@ -22,8 +22,8 @@ permissions:
   id-token: write
 
 env:
-  NODE_VERSION: "22"
-  TERRAFORM_VERSION: "1.13.5"
+  NODE_VERSION: "26"
+  TERRAFORM_VERSION: "1.17.1"
 
 jobs:
   terraform-plan:

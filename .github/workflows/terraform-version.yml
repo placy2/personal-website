@@ -1,0 +1,121 @@
+# Keeps the TERRAFORM_VERSION env pin in .github/workflows/*.yml current.
+#
+# Dependabot cannot do this: its terraform ecosystem bumps providers and
+# modules, not the CLI version, and a plain env value in a workflow is not a
+# github-actions dependency either. Modeled on baby-tracker's caddy-version.yml.
+#
+# TOKEN: the PR edits files under .github/workflows, and GITHUB_TOKEN can never
+# push workflow changes (there is no `workflows` permission for it). This job
+# therefore needs a `TERRAFORM_BUMP_TOKEN` repo secret: a fine-grained PAT on
+# this repo with Contents, Pull requests and Workflows read/write. A PAT also
+# means the PR triggers pr-validate like any human PR would.
+#
+# No AWS credentials: this job only reads a public API and writes to the repo.
+name: Terraform version
+
+on:
+  schedule:
+    # Mondays 09:00 UTC, alongside Dependabot (.github/dependabot.yml), so
+    # every update PR lands for the same weekly sitting.
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Check for token
+        env:
+          BUMP_TOKEN: ${{ secrets.TERRAFORM_BUMP_TOKEN }}
+        run: |
+          if [ -z "$BUMP_TOKEN" ]; then
+            echo "::error::TERRAFORM_BUMP_TOKEN secret is not set (see header of terraform-version.yml)"
+            exit 1
+          fi
+
+      - uses: actions/checkout@v7
+        with:
+          token: ${{ secrets.TERRAFORM_BUMP_TOKEN }}
+
+      - name: Open a PR if upstream has moved
+        env:
+          GH_TOKEN: ${{ secrets.TERRAFORM_BUMP_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          pin_re='^([[:space:]]*TERRAFORM_VERSION:[[:space:]]*)"[^"]*"'
+
+          # Every distinct pinned value across workflows (normally exactly one).
+          current=$(grep -hoE "$pin_re" .github/workflows/*.yml \
+            | sed -E 's/.*"([^"]*)"/\1/' | sort -u | paste -sd, -)
+
+          # /releases/latest already excludes drafts and pre-releases; check
+          # the flag anyway and insist on a plain X.Y.Z so nothing odd reaches sed.
+          release=$(gh api repos/hashicorp/terraform/releases/latest)
+          latest=$(jq -r '.tag_name' <<<"$release" | sed 's/^v//')
+          prerelease=$(jq -r '.prerelease' <<<"$release")
+          echo "pinned: ${current:-<none>}   upstream: $latest"
+
+          if [ -z "$current" ]; then
+            echo "no TERRAFORM_VERSION pin found in .github/workflows" >&2
+            exit 1
+          fi
+          if [ "$prerelease" != "false" ] || ! [[ "$latest" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "latest release '$latest' is not a stable X.Y.Z; skipping" >&2
+            exit 1
+          fi
+          if [ "$current" = "$latest" ]; then
+            echo "already current; nothing to do"
+            exit 0
+          fi
+
+          branch="chore/terraform-${latest}"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            echo "$branch already exists; a PR is presumably open"
+            exit 0
+          fi
+
+          sed -i -E "s/${pin_re}/\\1\"${latest}\"/" .github/workflows/*.yml
+          files=$(git diff --name-only)
+          if [ -z "$files" ]; then
+            echo "sed changed nothing; refusing to open an empty PR" >&2
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add $files
+          git commit -m "chore(terraform): bump Terraform CLI to ${latest}"
+          git push origin "$branch"
+
+          gh pr create \
+            --base main \
+            --head "$branch" \
+            --title "chore(terraform): bump Terraform CLI to ${latest}" \
+            --body "Upstream released Terraform ${latest} (pinned: ${current}).
+
+          \`TERRAFORM_VERSION\` updated in:
+          $(printf -- '- `%s`\n' $files)
+
+          Release notes: https://github.com/hashicorp/terraform/releases/tag/v${latest}
+
+          Before merging, check that \`required_version\` in \`terraform/provider.tf\`
+          and \`bootstrap-oidc/main.tf\` still admits ${latest}. Provider locks in
+          \`.terraform.lock.hcl\` are independent of the CLI version."
+
+          # Close PRs for older versions this job opened that never merged.
+          gh pr list --state open --json number,headRefName \
+            --jq ".[] | select(.headRefName | startswith(\"chore/terraform-\")) | select(.headRefName != \"$branch\") | .number" \
+            | while read -r pr; do
+                gh pr close "$pr" --delete-branch \
+                  --comment "Superseded by the Terraform ${latest} bump on \`$branch\`."
+              done

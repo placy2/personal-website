@@ -15,18 +15,6 @@ An evolving personal portfolio website for [parkerlacy.com](https://parkerlacy.c
 
 ## 🚀 Quick Start
 
-### With Docker (Recommended)
-```bash
-# One-command setup
-./scripts/dev-setup.sh
-
-# Or manually
-docker-compose up --build
-
-# View at http://localhost:5173
-```
-
-### Traditional Development
 ```bash
 cd frontend
 npm install
@@ -43,7 +31,6 @@ npm run dev
 - **IaC**: Terraform with environment-specific configurations
 - **CI/CD**: GitHub Actions with automated testing and deployment
 - **Testing**: Vitest + React Testing Library (unit), Playwright (e2e against the production build), Lighthouse CI (perf/a11y/SEO)
-- **Containerization Options**: Docker Compose w/ dev & prod configuration options
 
 ## 📁 Project Structure
 
@@ -225,20 +212,6 @@ cd frontend && npm run build
 - **TypeScript**: Type safety and better development experience
 - **Testing**: Comprehensive test coverage with Vitest
 - **Pre-commit hooks**: Husky + lint-staged run ESLint and Prettier on staged files before each commit (activated automatically by `npm install` in `frontend/`)
-
-## 📦 Docker
-
-### Development
-```dockerfile
-# Dockerfile.dev - Hot reloading with volume mounts
-docker-compose up
-```
-
-### Production
-```dockerfile
-# Dockerfile - Optimized production build
-docker-compose -f docker-compose.prod.yml up
-```
 
 ## 🤝 Contributing
 
