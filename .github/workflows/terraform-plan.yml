@@ -31,8 +31,8 @@ jobs:
     runs-on: ubuntu-latest
     # Not for deploy gating — this job only plans. It switches the OIDC `sub`
     # claim from the untrusted `repo:OWNER/REPO:pull_request` form to
-    # `repo:OWNER/REPO:environment:development`, which bootstrap-oidc's trust
-    # policy already allows. Without it AssumeRoleWithWebIdentity is denied.
+    # `repo:OWNER/REPO:environment:development`, which the aws-infra repo's trust
+    # policy (github-oidc/) already allows. Without it AssumeRoleWithWebIdentity is denied.
     environment: development
 
     steps:
