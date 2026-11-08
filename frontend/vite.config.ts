@@ -1,7 +1,7 @@
 import { defineConfig, loadEnv } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
-import { buildInfoDefines } from './build-info';
+import { buildInfoDefines } from './build-info.ts';
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, isSsrBuild }) => {
@@ -47,11 +47,11 @@ export default defineConfig(({ mode, isSsrBuild }) => {
     // Resolve aliases for cleaner imports
     resolve: {
       alias: {
-        '@': path.resolve(__dirname, 'src'),
-        '@components': path.resolve(__dirname, 'src/components'),
-        '@pages': path.resolve(__dirname, 'src/pages'),
-        '@assets': path.resolve(__dirname, 'src/assets'),
-        '@styles': path.resolve(__dirname, 'src/stylesheets'),
+        '@': path.resolve(import.meta.dirname, 'src'),
+        '@components': path.resolve(import.meta.dirname, 'src/components'),
+        '@pages': path.resolve(import.meta.dirname, 'src/pages'),
+        '@assets': path.resolve(import.meta.dirname, 'src/assets'),
+        '@styles': path.resolve(import.meta.dirname, 'src/stylesheets'),
       },
     },
 

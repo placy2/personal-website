@@ -204,7 +204,8 @@
   pointer-events: none;
 }
 
-.dgo-ace {
+.dgo-ace,
+.dgo-missed {
   position: absolute;
   left: 0;
   right: 0;
@@ -223,7 +224,8 @@
   pointer-events: none;
 }
 
-.dgo-ace small {
+.dgo-ace small,
+.dgo-missed small {
   display: block;
   margin: var(--space-2) 0;
   font:
@@ -233,6 +235,11 @@
   letter-spacing: 5px;
   color: var(--theme-light-purple);
   text-shadow: none;
+}
+
+.dgo-missed {
+  font-size: 34px;
+  line-height: 1;
 }
 
 /* ---------- controls ---------- */
@@ -295,6 +302,20 @@
 
 /* ---------- throw sequence (while .is-throwing is set) ---------- */
 
+/* Disc waypoints after the 54% mark (see dgo-throw). Defaults are the ace:
+   into the chains, then dropped into the tray. A miss holds the same line past
+   the chains, with the basket drawn over the disc (it passes behind), and exits
+   past the stage edge (the root clips it). The ACE overlay, flash and chain
+   shake only run under .is-ace; the MISS message only under .is-miss. */
+.dgo.is-miss {
+  --dgo-x2: 340px;
+  --dgo-y2: 20px;
+}
+
+.dgo.is-miss .dgo-props:first-of-type {
+  z-index: 1;
+}
+
 .dgo.is-throwing .dgo-plane {
   animation: dgo-collapse var(--dgo-throw-duration) ease-in-out;
 }
@@ -311,15 +332,19 @@
   animation-duration: 0.35s;
 }
 
-.dgo.is-throwing .dgo-chains {
+.dgo.is-ace .dgo-chains {
   animation: dgo-chain var(--dgo-throw-duration) linear;
 }
 
-.dgo.is-throwing .dgo-flash {
+.dgo.is-ace .dgo-flash {
   animation: dgo-flash var(--dgo-throw-duration) linear;
 }
 
-.dgo.is-throwing .dgo-ace {
+.dgo.is-miss .dgo-missed {
+  animation: dgo-missed var(--dgo-throw-duration) linear;
+}
+
+.dgo.is-ace .dgo-ace {
   animation: dgo-ace var(--dgo-throw-duration) linear;
 }
 
@@ -408,7 +433,7 @@
   }
 }
 
-/* Center -> tee (left) -> low, flat line -> chains (right) -> drop into tray -> reset.
+/* Center -> tee (left) -> low, flat line -> over/into the chains (right) -> drop into tray, or fly on past on a miss -> reset.
    One transform list per keyframe: some CSS minifiers drop `translate`/`scale` when
    they share a keyframe with `transform`. */
 @keyframes dgo-throw {
@@ -438,18 +463,18 @@
     transform: translate(92px, 35px) scale(0.36) rotateX(62deg);
   }
   54% {
-    transform: translate(202px, 30px) scale(0.36) rotateX(62deg);
+    transform: translate(var(--dgo-x1, 202px), var(--dgo-y1, 30px)) scale(0.36) rotateX(62deg);
     animation-timing-function: ease-in;
   }
   61% {
-    transform: translate(202px, 68px) scale(0.36) rotateX(76deg);
+    transform: translate(var(--dgo-x2, 202px), var(--dgo-y2, 68px)) scale(0.36) rotateX(76deg);
   }
   82% {
-    transform: translate(202px, 68px) scale(0.36) rotateX(76deg);
+    transform: translate(var(--dgo-x2, 202px), var(--dgo-y2, 68px)) scale(0.36) rotateX(76deg);
     opacity: 1;
   }
   88% {
-    transform: translate(202px, 68px) scale(0.36) rotateX(76deg);
+    transform: translate(var(--dgo-x2, 202px), var(--dgo-y2, 68px)) scale(0.36) rotateX(76deg);
     opacity: 0;
   }
   90% {
@@ -528,5 +553,23 @@
   100% {
     opacity: 0;
     transform: scale(1.08);
+  }
+}
+
+@keyframes dgo-missed {
+  0%,
+  56% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  62%,
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  90%,
+  100% {
+    opacity: 0;
+    transform: scale(1);
   }
 }

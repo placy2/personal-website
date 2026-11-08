@@ -1,7 +1,7 @@
 import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
-import { buildInfoDefines } from './build-info';
+import { buildInfoDefines } from './build-info.ts';
 
 export default defineConfig({
   plugins: [react()],
@@ -15,11 +15,11 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
-      '@components': resolve(__dirname, 'src/components'),
-      '@pages': resolve(__dirname, 'src/pages'),
-      '@assets': resolve(__dirname, 'src/assets'),
-      '@styles': resolve(__dirname, 'src/stylesheets'),
+      '@': resolve(import.meta.dirname, 'src'),
+      '@components': resolve(import.meta.dirname, 'src/components'),
+      '@pages': resolve(import.meta.dirname, 'src/pages'),
+      '@assets': resolve(import.meta.dirname, 'src/assets'),
+      '@styles': resolve(import.meta.dirname, 'src/stylesheets'),
     },
   },
 });
