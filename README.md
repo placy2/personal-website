@@ -3,6 +3,10 @@
 [![Deploy](https://github.com/placy2/personal-website/actions/workflows/deploy.yml/badge.svg?branch=main)](https://github.com/placy2/personal-website/actions/workflows/deploy.yml)
 [![PR Validation](https://github.com/placy2/personal-website/actions/workflows/pr-validate.yml/badge.svg)](https://github.com/placy2/personal-website/actions/workflows/pr-validate.yml)
 [![Lighthouse CI](https://github.com/placy2/personal-website/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/placy2/personal-website/actions/workflows/lighthouse.yml)
+[![Lighthouse Performance](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fplacy2%2Fpersonal-website%2Flighthouse-reports%2Fbadges%2Fperformance.json)](https://github.com/placy2/personal-website/actions/workflows/lighthouse.yml)
+[![Lighthouse Accessibility](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fplacy2%2Fpersonal-website%2Flighthouse-reports%2Fbadges%2Faccessibility.json)](https://github.com/placy2/personal-website/actions/workflows/lighthouse.yml)
+[![Lighthouse Best Practices](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fplacy2%2Fpersonal-website%2Flighthouse-reports%2Fbadges%2Fbest-practices.json)](https://github.com/placy2/personal-website/actions/workflows/lighthouse.yml)
+[![Lighthouse SEO](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fplacy2%2Fpersonal-website%2Flighthouse-reports%2Fbadges%2Fseo.json)](https://github.com/placy2/personal-website/actions/workflows/lighthouse.yml)
 [![Dependabot](https://img.shields.io/badge/Dependabot-enabled-025E8C?logo=dependabot&logoColor=white)](https://github.com/placy2/personal-website/blob/main/.github/dependabot.yml)
 
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
