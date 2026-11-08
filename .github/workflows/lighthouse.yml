@@ -6,9 +6,18 @@ name: Lighthouse CI
 # `pull_request_target`) and needs no repo secrets: results are uploaded to
 # Lighthouse CI's temporary public storage (see frontend/lighthouserc.json),
 # and the run URL is printed in the job summary + logs.
+#
+# On push to main (post-merge) it additionally publishes the raw reports and
+# shields.io endpoint badge JSON to the `lighthouse-reports` branch, so the
+# README can show the real scores. That branch is the only thing this workflow
+# writes to, and only the push path has a write-capable token in play.
 
 on:
   pull_request:
+    branches: [main]
+    paths:
+      - "frontend/**"
+  push:
     branches: [main]
     paths:
       - "frontend/**"
@@ -23,6 +32,10 @@ jobs:
   lighthouse:
     name: Lighthouse CI
     runs-on: ubuntu-latest
+    permissions:
+      # write is only exercised by the push-to-main publish step below;
+      # PR runs (esp. from forks) get a read-only token regardless.
+      contents: write
     defaults:
       run:
         working-directory: ./frontend
@@ -46,3 +59,41 @@ jobs:
 
       - name: Run Lighthouse CI
         run: npm run lhci
+
+      - name: Build badge JSON
+        if: github.event_name == 'push'
+        run: node scripts/lighthouse-badges.mjs "$RUNNER_TEMP/badges"
+
+      - name: Publish reports + badges to lighthouse-reports branch
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+        working-directory: .
+        run: |
+          set -euo pipefail
+          repo_url="https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          work="$RUNNER_TEMP/reports-branch"
+
+          if git ls-remote --exit-code --heads "$repo_url" lighthouse-reports >/dev/null; then
+            git clone --quiet --depth 1 --branch lighthouse-reports "$repo_url" "$work"
+          else
+            git init --quiet -b lighthouse-reports "$work"
+            git -C "$work" remote add origin "$repo_url"
+          fi
+
+          cd "$work"
+          # Latest raw reports replace the previous ones (history lives in history.jsonl).
+          rm -rf badges reports
+          mkdir -p badges reports
+          cp "$RUNNER_TEMP"/badges/*.json badges/
+          rm badges/summary.json
+          cp "$GITHUB_WORKSPACE"/frontend/.lighthouseci/lhr-*.json reports/
+          jq -c --arg sha "$SHA" --arg date "$(date -u +%FT%TZ)" '. + {sha: $sha, date: $date}' \
+            "$RUNNER_TEMP/badges/summary.json" >> history.jsonl
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit --quiet -m "Lighthouse scores for ${SHA}"
+          git push --quiet origin lighthouse-reports

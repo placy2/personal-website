@@ -1,5 +1,5 @@
 terraform {
-  required_version = ">= 1.13.5"
+  required_version = ">= 1.17.1"
   # Partial backend config: `key` is intentionally omitted so dev and prod
   # keep separate state. Pass the environment's backend file at init time:
   #   terraform init -backend-config=env/dev.s3.tfbackend

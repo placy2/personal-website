@@ -62,5 +62,11 @@
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.6",
     "vitest": "^4.0.3"
+  },
+  "overrides": {
+    "basic-ftp": "^6.2.6",
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    }
   }
 }

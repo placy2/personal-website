@@ -109,7 +109,7 @@ jobs:
           Release notes: https://github.com/hashicorp/terraform/releases/tag/v${latest}
 
           Before merging, check that \`required_version\` in \`terraform/provider.tf\`
-          and \`bootstrap-oidc/main.tf\` still admits ${latest}. Provider locks in
+          and the private \`aws-infra\` repo's root configs still admit ${latest}. Provider locks in
           \`.terraform.lock.hcl\` are independent of the CLI version."
 
           # Close PRs for older versions this job opened that never merged.
