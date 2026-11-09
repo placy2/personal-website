@@ -116,9 +116,7 @@ Checks performed (exit code `0` unless the hard checks below fail):
 - **Valid HTML structure** (`<!doctype html>` + `</html>`) — hard failure.
 - **React root container** (`id="root"`) present — soft failure.
 
-A future Playwright-based e2e suite is sketched in comments at the bottom of the script (not yet
-implemented); see the "Playwright integration" work already added for the actual test suite under
-`frontend/`.
+Browser-level checks live in the Playwright suite under `frontend/e2e/` (`npm run test:e2e`).
 
 ## Troubleshooting
 
@@ -136,10 +134,10 @@ implemented); see the "Playwright integration" work already added for the actual
 - **`BucketAlreadyExists` / `BucketAlreadyOwnedByYou` on apply** — S3 bucket names are globally
   unique. If you've renamed `bucket_name` in `terraform/env/*.tfvars` or are standing up a new
   environment, pick a name nobody else on AWS has claimed.
-- **State conflicts / "resource already managed"** — there is no DynamoDB table configured for state
-  locking (`terraform/provider.tf` only sets `bucket`/`region` on the S3 backend). Avoid running
-  `deploy.sh`/`teardown.sh` concurrently against the same environment, including from CI and locally
-  at the same time.
+- **State lock errors** — state uses S3-native locking (`use_lockfile = true` in
+  `terraform/provider.tf`), and the scripts pass `-lock-timeout=5m`. A lock held by CI or another
+  run makes Terraform wait, then fail. Wait for the other run to finish rather than forcing unlock.
+  If you initialized before locking was enabled, re-run `terraform init -reconfigure`.
 - **CloudFront changes in `prod` "apply" take a long time / plan shows long diffs** — CloudFront
   distribution updates can take 5–15+ minutes to propagate; this is normal AWS behavior, not a
   script issue.
@@ -149,8 +147,9 @@ implemented); see the "Playwright integration" work already added for the actual
   conditionally created only for `prod`, tearing down and redeploying prod generates a *new* zone
   with new NS records. You'll need to update the domain registrar's nameservers to match, or your
   domain will stop resolving. Prefer never tearing down prod; use `dev` for cost experiments instead.
-- **CI-specific**: `terraform-plan.yml` and `deploy.yml` both use static
-  `AWS_ACCESS_KEY_ID`/`AWS_SECRET_ACCESS_KEY` secrets (not OIDC). Dependabot-authored PRs run under
-  *Dependabot secrets*, which are separate from repo secrets — if a Dependabot PR's Terraform Plan
-  check fails on AWS auth, make sure the same two secrets are also set under **Settings → Secrets and
-  variables → Dependabot**.
+- **CI-specific**: `terraform-plan.yml`, `deploy.yml` and `cleanup.yml` authenticate to AWS via GitHub
+  OIDC (`aws-actions/configure-aws-credentials` with the `AWS_DEPLOY_ROLE_ARN` secret), not static
+  keys. The role and OIDC provider live in the separate `aws-infra` repo. Dependabot-authored PRs run
+  under *Dependabot secrets*, which are separate from repo secrets — if a Dependabot PR's Terraform
+  Plan check fails on AWS auth, set `AWS_DEPLOY_ROLE_ARN` under **Settings → Secrets and variables →
+  Dependabot** too (the role's trust policy must also allow that run).

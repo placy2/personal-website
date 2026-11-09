@@ -7,8 +7,8 @@ const Projects: React.FC = () => {
     <div>
       <h1>Projects</h1>
       <p>
-        This is a collection of my public projects and past work. While not exhaustive, this is what
-        I can easily show off (for now)!
+        A collection of my public projects and past work. Not exhaustive, but these are the ones I
+        can share openly.
       </p>
       <ul className="project-grid">
         {PROJECTS.map(project => (

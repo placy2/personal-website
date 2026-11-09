@@ -15,224 +15,98 @@
 ![Terraform ≥1.13](https://img.shields.io/badge/Terraform-%E2%89%A51.13-844FBA?logo=terraform&logoColor=white)
 ![AWS S3 + CloudFront](https://img.shields.io/badge/AWS-S3%20%2B%20CloudFront-232F3E?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xOS4zNSAxMC4wNEE3LjQ5IDcuNDkgMCAwIDAgMTIgNEM5LjExIDQgNi42IDUuNjQgNS4zNSA4LjA0QTUuOTk0IDUuOTk0IDAgMCAwIDAgMTRjMCAzLjMxIDIuNjkgNiA2IDZoMTNjMi43NiAwIDUtMi4yNCA1LTUgMC0yLjY0LTIuMDUtNC43OC00LjY1LTQuOTZ6Ii8+PC9zdmc+)
 
-An evolving personal portfolio website for [parkerlacy.com](https://parkerlacy.com), showcasing cloud engineering expertise with a focus on modern development practices and cost-effective infrastructure.
+Personal portfolio site for [parkerlacy.com](https://parkerlacy.com): a statically prerendered React app on AWS (S3 + CloudFront + Route 53), managed with Terraform and deployed through GitHub Actions. There is no backend.
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
 cd frontend
 npm install
-npm run dev
-
-# View at http://localhost:5173
+npm run dev   # http://localhost:5173
 ```
 
-## 🏗️ Architecture
+Optional: `cp .env.example .env.local` to override `VITE_APP_VERSION`.
 
-- **Frontend**: React 19 + TypeScript + Vite
-- **Styling**: CSS with custom properties
-- **Infrastructure**: AWS S3 + CloudFront + Route 53
-- **IaC**: Terraform with environment-specific configurations
-- **CI/CD**: GitHub Actions with automated testing and deployment
-- **Testing**: Vitest + React Testing Library (unit), Playwright (e2e against the production build), Lighthouse CI (perf/a11y/SEO)
+## Architecture
 
-## 📁 Project Structure
+- **Frontend**: React 19 + TypeScript + Vite, prerendered to static HTML per route (`frontend/scripts/prerender.mjs`)
+- **Styling**: Plain CSS with custom properties
+- **Infrastructure**: AWS S3 + CloudFront + Route 53 + ACM (prod); S3 only (dev)
+- **IaC**: Terraform, one config parameterized per environment (`terraform/env/`)
+- **CI/CD**: GitHub Actions: PR validation, Lighthouse CI, Terraform plan, deploy
+- **Testing**: Vitest + React Testing Library (unit and a11y), Playwright (e2e against the production build), Lighthouse CI (perf/a11y/best-practices/SEO)
+
+## Project Structure
 
 ```
 personal-website/
-├── frontend/                 # React application
+├── frontend/
 │   ├── src/
-│   │   ├── components/      # Reusable components
-│   │   ├── pages/          # Page components
-│   │   ├── constants/      # Shared constants
-│   │   └── stylesheets/    # CSS files
-│   ├── public/             # Static assets
-│   └── dist/              # Build output
-├── terraform/              # Infrastructure as Code
-│   ├── *.tf               # Terraform configuration
-│   ├── dev.tfvars        # Development environment
-│   └── prod.tfvars       # Production environment
-├── scripts/               # Helper scripts
-└── .github/              # CI/CD workflows
+│   │   ├── components/   # Shared components
+│   │   ├── pages/        # One component per route
+│   │   ├── data/         # Case studies, projects, route metadata
+│   │   ├── constants/    # Shared constants
+│   │   ├── seo/          # Head tag generation
+│   │   └── stylesheets/  # CSS, one file per component
+│   ├── e2e/              # Playwright smoke tests
+│   ├── scripts/          # Prerender + Lighthouse badge scripts
+│   └── public/           # Static assets (robots.txt, security.txt, ...)
+├── terraform/
+│   ├── *.tf              # Infrastructure
+│   ├── env/              # Per-environment tfvars + backend config
+│   └── functions/        # CloudFront Function (route rewriting)
+├── scripts/              # Deploy / teardown / smoke-test helpers
+├── docs/                 # Runbooks
+└── .github/              # Workflows + Dependabot config
 ```
 
-## 🛠️ Development
+## Development
 
-### Available Scripts
-
-#### Frontend
-```bash
-npm run dev          # Start development server
-npm run build        # Build for production
-npm run preview      # Preview production build using vite
-npm run test         # Run tests in watch mode
-npm run test:run     # Run tests once
-npm run lint         # Lint code
-npm run lint:fix     # Fix linting issues
-npm run format       # Format code with Prettier
-npm run format:check # Check formatting
-```
-
-#### Infrastructure
-```bash
-./scripts/deploy.sh dev plan      # Plan development deployment
-./scripts/deploy.sh dev apply     # Deploy to development
-./scripts/deploy.sh prod plan     # Plan production deployment
-./scripts/deploy.sh prod apply    # Deploy to production
-./scripts/teardown.sh dev         # Destroy development infrastructure
-./scripts/smoke-test.sh <url>     # Run smoke tests against deployed site
-```
-
-See [`scripts/README.md`](scripts/README.md) for full usage details, expected environment/AWS
-setup, and troubleshooting tips for each script.
-
-### Environment Configuration
-
-Copy `.env.example` to `.env.local` and customize:
+Frontend commands (run from `frontend/`):
 
 ```bash
-cp .env.example .env.local
+npm run dev           # dev server
+npm run build         # typecheck + production build
+npm run preview       # preview the production build
+npm run test:run      # unit tests, single pass (test for watch mode)
+npm run test:coverage # unit tests with coverage
+npm run test:e2e      # Playwright smoke tests (needs a prior build)
+npm run lint          # eslint (lint:fix to autofix)
+npm run format:check  # prettier (format to write)
+npm run lhci          # Lighthouse CI against dist/ (needs a prior build + Chrome)
 ```
 
-## 🌍 Environments
+A husky pre-commit hook (installed by `npm install` in `frontend/`) runs ESLint and Prettier on staged files.
 
-### Development
-- **S3 Only**: No CloudFront for cost savings
-- **Bucket**: `parkerlacy-dev-hosting`
-- **Domain**: S3 website endpoint
+See [`frontend/README.md`](frontend/README.md) for structure and styling conventions.
 
-### Production
-- **Full Stack**: S3 + CloudFront + Route 53
-- **Bucket**: `parkerlacy-website-hosting-bucket`
-- **Domain**: `parkerlacy.com`
+## Environments
 
-## 📋 Infrastructure Management
+| | Dev | Prod |
+|---|---|---|
+| Stack | S3 website only | S3 + CloudFront + Route 53 |
+| Bucket | `parkerlacy-dev-hosting` | `parkerlacy-website-hosting` |
+| Domain | S3 website endpoint | `parkerlacy.com` |
 
-### Cost-Optimized Development
-```bash
-# Deploy minimal infrastructure (S3 only)
-./scripts/deploy.sh dev apply
+Dev is torn down regularly to save cost, so it is often absent.
 
-# Quickly tear down to save costs
-./scripts/teardown.sh dev
-```
+## Infrastructure and Deployment
 
-### Production Deployment
-```bash
-# Deploy full infrastructure (S3 + CloudFront + Route 53)
-./scripts/deploy.sh prod apply
-```
+Deploys run through GitHub Actions (`deploy.yml`): a push to `main` deploys dev automatically, and prod requires manual approval via a GitHub environment. PRs touching `terraform/**` get a plan comment; PRs touching `frontend/**` run lint, tests, build, Playwright and Lighthouse. Workflows authenticate to AWS with GitHub OIDC (no static keys).
 
-### Manual Terraform Commands
+Terraform state lives in S3 with S3-native locking (`use_lockfile = true`). To run Terraform locally (e.g. `plan`):
+
 ```bash
 cd terraform
-
-# Initialize with the state key for the target environment (dev or prod)
-terraform init -reconfigure -backend-config=env/dev.s3.tfbackend
-
-# Plan with environment-specific variables
-terraform plan -lock-timeout=5m -var-file="env/dev.tfvars"
-
-# Apply changes
-terraform apply -lock-timeout=5m -var-file="env/dev.tfvars"
-
-# Destroy infrastructure
-terraform destroy -lock-timeout=5m -var-file="env/dev.tfvars"
+terraform init -reconfigure -backend-config=env/<dev|prod>.s3.tfbackend
+terraform plan -lock-timeout=5m -var-file="env/<dev|prod>.tfvars"
 ```
 
-**State locking:** the S3 backend uses S3-native locking (`use_lockfile = true`), so a
-run waits for (or fails on) a lock held by CI or another user instead of clobbering state.
-`-lock-timeout=5m` makes Terraform wait for the lock rather than failing immediately.
-If you initialized `terraform/` before locking was enabled, re-run
-`terraform init -reconfigure -backend-config=env/<env>.s3.tfbackend` once after pulling.
+Helper scripts (`scripts/deploy.sh`, `teardown.sh`, `smoke-test.sh`) wrap these commands; see [`scripts/README.md`](scripts/README.md) for usage and troubleshooting. The site is deployed by Terraform uploading `frontend/dist/**`, so the frontend must be built first.
 
-## 🔧 Testing
+After each deploy, `scripts/smoke-test.sh <url>` checks the live site (HTTP 200, expected content, valid HTML, React root).
 
-### Running Tests
-```bash
-# Run all tests
-npm run test
+## License
 
-# Run tests once
-npm run test:run
-
-# Run with coverage
-npm run test:coverage
-```
-
-### Writing Tests
-Tests are written using Vitest and React Testing Library. Examples can be found in:
-- `src/App.test.tsx`
-- `src/pages/Home.test.tsx`
-
-### Smoke Tests
-Post-deployment smoke tests validate that the deployed site is functional:
-
-```bash
-# Run smoke tests against development
-./scripts/smoke-test.sh http://parkerlacy-dev-hosting.s3-website-us-east-1.amazonaws.com
-
-# Run smoke tests against production
-./scripts/smoke-test.sh https://<cloudfront-domain>.cloudfront.net
-```
-
-The smoke tests verify:
-- HTTP 200 status response
-- Expected content is present (name, key technologies)
-- Valid HTML structure
-- React app container exists
-
-These tests run automatically in the CI/CD pipeline after each deployment.
-
-For more comprehensive end-to-end testing, see the Playwright implementation suggestions in `scripts/smoke-test.sh`.
-
-## 🚀 Deployment
-
-### Automated (GitHub Actions)
-- **Pull Requests**: Automatically test and plan infrastructure changes
-- **Main Branch**: Deploy to development environment
-- **Production**: Manual approval required via GitHub environments
-
-### Manual Deployment
-```bash
-# Build frontend
-cd frontend && npm run build
-
-# Deploy infrastructure
-./scripts/deploy.sh prod apply
-```
-
-## 🔒 Security
-
-- Dependabot for automated dependency updates
-- Security scanning in CI/CD pipeline
-- Least privilege AWS IAM policies
-- HTTPS everywhere with CloudFront
-
-## 🎨 Code Quality
-
-- **ESLint**: Code linting with TypeScript support
-- **Prettier**: Consistent code formatting
-- **TypeScript**: Type safety and better development experience
-- **Testing**: Comprehensive test coverage with Vitest
-- **Pre-commit hooks**: Husky + lint-staged run ESLint and Prettier on staged files before each commit (activated automatically by `npm install` in `frontend/`)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make changes with tests
-4. Ensure all tests pass
-5. Submit a pull request
-
-## 📄 License
-
-- Code (source): MIT License — see LICENSE (recommended for code, components, scripts).
-- Personal content (résumé text, biography, original images, etc.): All Rights Reserved — see CONTENT_LICENSE.md.
-
-This separation keeps code permissively licensed while preventing reuse of personal content without permission.
-
-
----
-
-**Focus**: Easy local development + Simple cloud cost management + Industry best practices
+- Code: MIT, see [LICENSE.md](LICENSE.md).
+- Personal content (résumé text, biography, original images, etc.): All Rights Reserved, see [CONTENT_LICENSE.md](CONTENT_LICENSE.md).
