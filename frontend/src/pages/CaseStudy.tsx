@@ -43,12 +43,14 @@ const CaseStudy: React.FC = () => {
           <li key={tag}>{tag}</li>
         ))}
       </ul>
-      {SECTIONS.map(({ key, heading }) => (
-        <section key={key}>
-          <h2>{heading}</h2>
-          <p>{study[key]}</p>
-        </section>
-      ))}
+      {SECTIONS.map(({ key, heading }) =>
+        study[key] ? (
+          <section key={key}>
+            <h2>{heading}</h2>
+            <p>{study[key]}</p>
+          </section>
+        ) : null
+      )}
     </article>
   );
 };

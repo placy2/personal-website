@@ -30,7 +30,7 @@ src/
 └── assets/         # Images bundled by Vite
 ```
 
-Routes are declared in `App.tsx`. To add a page: create it in `pages/`, add a `<Route>` in `App.tsx`, and a `MenuItem` in `components/MenuBar.tsx`.
+Routes are declared in `App.tsx`. To add a page: create it in `pages/`, add a `<Route>` in `App.tsx`, a `MenuItem` in `components/MenuBar.tsx`, and an entry in `data/routeMeta.ts` (drives prerendering, head tags and the sitemap).
 
 ## Styling conventions
 

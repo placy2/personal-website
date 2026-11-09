@@ -18,9 +18,13 @@ describe('CaseStudy Component', () => {
     it(`renders every section of "${study.slug}"`, () => {
       renderAt(`/work/${study.slug}`);
       expect(screen.getByRole('heading', { level: 1, name: study.title })).toBeInTheDocument();
-      for (const heading of ['Context', 'Problem', 'What I did', 'Result', "What I'd change"]) {
+      for (const heading of ['Context', 'Problem', 'What I did', 'Result']) {
         expect(screen.getByRole('heading', { level: 2, name: heading })).toBeInTheDocument();
       }
+      // "What I'd change" is optional: shown only when the entry has one.
+      expect(screen.queryByRole('heading', { level: 2, name: "What I'd change" }) !== null).toBe(
+        Boolean(study.wouldChange)
+      );
       expect(screen.getByText(study.result)).toBeInTheDocument();
       expect(screen.getByRole('link', { name: /all work/i })).toHaveAttribute('href', '/work');
     });

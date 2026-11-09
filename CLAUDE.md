@@ -1,51 +1,20 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
 ## Overview
 
-Personal portfolio site for parkerlacy.com. React 19 + TypeScript + Vite SPA in `frontend/`, deployed as a static site to AWS (S3, plus CloudFront + Route 53 in prod) via Terraform in `terraform/`. There is no backend server.
-
-## Commands
-
-All frontend commands run from `frontend/`:
-
-```bash
-npm run dev            # Dev server at http://localhost:5173
-npm run build          # tsc -b && vite build → dist/
-npm run lint           # eslint .   (lint:fix to auto-fix)
-npm run format:check   # prettier   (format to write)
-npm run test           # vitest watch mode
-npm run test:run       # vitest, single pass (what CI runs)
-npx vitest run src/pages/Home.test.tsx        # single test file
-npx vitest run -t "renders heading"           # single test by name
-npm run test:e2e       # Playwright smoke tests (e2e/); auto-starts `vite preview` on :4173, requires a prior build
-npm run lhci           # Lighthouse CI audit of dist/ (perf/a11y/best-practices/SEO); requires a prior build + local Chrome
-```
-
-Core Web Vitals (CLS/LCP/INP/FCP/TTFB) are reported at runtime via `src/reportWebVitals.ts`, wired into `src/main.tsx`. The default handler logs to the console; swap in an analytics-backed `ReportHandler` to collect real-user metrics.
-
-Infrastructure (from repo root; see `scripts/README.md` for AWS setup details):
-
-```bash
-./scripts/deploy.sh <dev|prod> <plan|apply>   # runs terraform init -reconfigure with env/<env>.s3.tfbackend first
-./scripts/teardown.sh dev                     # destroy dev infra (dev is torn down regularly to save cost)
-./scripts/smoke-test.sh <url>                 # curl-based checks against a deployed site
-```
+Personal portfolio for parkerlacy.com. React 19 + TypeScript + Vite SPA in `frontend/`, prerendered to static HTML, deployed to AWS (S3, plus CloudFront + Route 53 in prod) via Terraform in `terraform/`. No backend. Commands: see `README.md`, `frontend/README.md`, `scripts/README.md`.
 
 ## Architecture
 
-- `frontend/src/App.tsx` — react-router-dom `BrowserRouter` with routes `/` (Home), `/about`, `/work` (case study index), `/work/:slug` (one page per entry in `src/data/caseStudies.ts`), `/projects`, `/resume`. New routes also need an entry in `src/data/routeMeta.ts`, which drives prerendering, head tags and the sitemap. Pages live in `src/pages/`, shared components in `src/components/`, page content/data in `src/data/` and `src/constants/`, CSS (custom properties, one file per component) in `src/stylesheets/`.
-- Path aliases `@`, `@components`, `@pages`, `@assets`, `@styles` are defined in **both** `vite.config.ts` and `vitest.config.ts` — keep them in sync if changed.
-- Two test layers: Vitest + React Testing Library unit tests colocated with source (`*.test.tsx`, jsdom, setup in `src/test/setup.ts`), and Playwright smoke tests in `e2e/` that run against the real production build (`vite preview`) to catch bundle-level regressions unit tests can't see. Vitest excludes `e2e/**`; don't put Playwright specs elsewhere.
-- Terraform: single config in `terraform/`, parameterized per environment via `env/dev.tfvars` / `env/prod.tfvars` with separate backend state files (`env/*.s3.tfbackend`). Dev is S3-only (cost saving); prod adds CloudFront + Route 53 + ACM for parkerlacy.com. Terraform itself uploads `frontend/dist/**` as `aws_s3_object` resources — deploying the site is a `terraform apply`, so the frontend must be built first (deploy.sh handles this).
-- Terraform state is locked via S3-native locking (`use_lockfile = true` in `provider.tf`; lock object `<key>.tflock`). All plan/apply/destroy calls pass `-lock-timeout=5m`, and the state-writing CI jobs share `concurrency` groups `terraform-dev` / `terraform-prod`. Local checkouts initialized before locking was enabled must run `terraform init -reconfigure -backend-config=env/<env>.s3.tfbackend` once.
-- The GitHub Actions deploy role and the account's GitHub OIDC provider no longer live in this repo (the old `bootstrap-oidc/` is gone). They are now in the private `aws-infra` repo (`github-oidc/` root), applied by hand from a laptop with admin credentials. A trust-policy or permission change (e.g. a new workflow or environment that authenticates to AWS) is made there, not here.
+- Routes live in `frontend/src/App.tsx`. Every new route also needs an entry in `src/data/routeMeta.ts`, which drives prerendering, head tags and the sitemap. `/work/:slug` pages come from `src/data/caseStudies.ts`.
+- Path aliases (`@`, `@components`, `@pages`, `@assets`, `@styles`) are defined in **both** `vite.config.ts` and `vitest.config.ts`. Keep them in sync.
+- Tests: Vitest + RTL colocated as `*.test.tsx`. Playwright smoke tests in `e2e/` run against `vite preview` (needs a prior build). Vitest excludes `e2e/**`.
+- Terraform: one config, parameterized by `env/<env>.tfvars` and `env/<env>.s3.tfbackend`. Dev is S3-only and torn down regularly. Prod adds CloudFront + Route 53 + ACM. Deploying is a `terraform apply` that uploads `frontend/dist/**`, so build the frontend first.
+- State locking is S3-native (`use_lockfile = true`). Pass `-lock-timeout=5m`. After pulling, re-run `terraform init -reconfigure -backend-config=env/<env>.s3.tfbackend` once.
+- The GitHub OIDC provider and deploy role live in the private `aws-infra` repo (`github-oidc/`). Trust or permission changes go there.
 
-## CI/CD (GitHub Actions)
+## CI/CD
 
-- `pr-validate.yml`: on PRs touching `frontend/**` — lint, unit tests, format check, build, Playwright e2e. Deliberately uses plain `pull_request` (no secrets) so Dependabot/Actions-bump PRs exercise the workflow pre-merge; don't switch it to `pull_request_target`.
-- `lighthouse.yml`: on PRs touching `frontend/**` — builds the site and runs Lighthouse CI (`@lhci/cli` + `frontend/lighthouserc.json`) against `dist/`, uploading reports to Lighthouse CI temporary public storage. Like `pr-validate.yml` it uses plain `pull_request` and needs no secrets.
-- `terraform-plan.yml`: terraform plan on PRs touching `terraform/**`.
-- `deploy.yml`: on push to main — detects meaningful changes (frontend/terraform/workflows), deploys to dev automatically; prod requires manual approval via GitHub environments or `workflow_dispatch`.
-- Pre-commit hook (husky, config lives in `frontend/.husky/` and `lint-staged` in `frontend/package.json`) runs eslint --fix + prettier on staged files.
+- `pr-validate.yml` and `lighthouse.yml` use plain `pull_request` (no secrets) so Dependabot PRs run pre-merge. Never switch them to `pull_request_target`.
+- `deploy.yml`: push to `main` deploys dev. Prod needs environment approval or `workflow_dispatch`.
+- Pre-commit hook (husky + lint-staged) runs eslint --fix and prettier on staged files.

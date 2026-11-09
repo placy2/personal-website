@@ -7,12 +7,38 @@ export interface CaseStudy {
   problem: string;
   whatIDid: string;
   result: string;
-  wouldChange: string;
+  // Optional: omit when there's nothing honest to say yet (e.g. a rollout still in progress).
+  wouldChange?: string;
 }
 
-// Each entry becomes a /work/<slug> page. Keep `summary` under ~160 characters
+// Each entry becomes a /work/<slug> page. Keep `summary` under ~200 characters
 // (it doubles as the meta / Open Graph description).
 export const CASE_STUDIES: CaseStudy[] = [
+  {
+    slug: 'ai-agents-that-patrol-grafana',
+    title: 'Hackathon (3rd place prize): AI agents that patrol our Grafana',
+    summary:
+      'A hackathon team built a prize-winning solution: AI agents that investigate Grafana alerts and find monitoring gaps. I built their backbone and the guard that protects shared monitoring.',
+    tags: [
+      'Amazon Bedrock',
+      'Grafana',
+      'FastAPI',
+      'Docker Compose',
+      'Claude Code',
+      'SQLite',
+      'Github',
+    ],
+    context:
+      'Our Grafana fires a steady stream of alerts. Most get skimmed, acknowledged or ignored, and whatever someone learns investigating one is gone by the next time it fires. In a hackathon week, four of us built Ranger: AI agents that patrol Grafana, investigate what fires, and write up each result with a root cause, evidence and a recommendation. A person reviews each one in a web UI and accepts or dismisses it. When they accept, an agent files the ticket, opens the pull request, or writes the alert rule change for someone to apply. One agent looks for failure signals nothing alerts on, like crash-looping containers or API error rates, and proposes one rule per gap that covers every service.',
+    problem:
+      "Agents that query monitoring run against the same log and metrics servers everyone's alerts depend on, so a careless run can break alerting for everyone else. They also had to stay cheap, never change Grafana on their own, and make sense to someone who wasn't on the team. And four people building in parallel needed a shared contract on day one, or we'd spend the week blocking each other.",
+    whatIDid:
+      "On the first day I built the API, the SQLite knowledgebase schema and migrations, the Docker Compose setup and CI, so the UI and agent work could start right away and we could run and rebuild the app locally without any issue. Then I built a load guard. It watches the log and metrics servers' own health while agents run. It slows agents' queries when the servers are busy, holds new runs when they're saturated, and stops runs when other callers start failing. I also built an alert history service that pulls 30 days of fires from Grafana with no AI involved. It ranks the noisiest rules, and it tells the alerts agent which rules it has already investigated, so a repeat fire just gets counted.",
+    result:
+      "The guard got a real test mid-week. Before proposing a rule, the gap-finding agent replays it against past data to check it wouldn't be noisy, and long replays over high-cardinality metrics overloaded our shared metrics server. I sized replays by what they cost and taught the guard to watch the server's memory. It now trips far less often on ordinary load and still catches the pressure that matters. By the demo the whole loop worked: an agent spotted a problem in Grafana, a person accepted the fix, and an agent filed the ticket and opened pull requests across 3 repositories simultaneously.",
+    wouldChange:
+      "I'd have the guard watch the servers' raw metrics from the start, not just their query queues. My first version tripped on ordinary queries and tried too hard to catch 'ramp up patterns', ending up acting like a hair trigger that blocked local work an annoying amount. It also still managed to miss the memory pressure that mattered. I'd also spend more time on the interaction patterns with agent issues, but this project will enter actual usage among several teams, so I may get that chance.",
+  },
   {
     slug: 'self-patching-build-agents',
     title: 'Build agents that patch themselves every week',
@@ -29,5 +55,20 @@ export const CASE_STUDIES: CaseStudy[] = [
       "Updates now take around 15 minutes of hands-on time instead of three days, and agents get patched weekly. The rollback drill took under 15 minutes from diagnosis to fix. It's still early, with two or three Renovate bumps and two weekly rebuilds so far.",
     wouldChange:
       "Renovate only watches the base AMI right now. I want it tracking the tool versions in our Image Builder components next. I also found bugs in the Lambda that scales the agents' Auto Scaling groups, and those fixes are on the list.",
+  },
+  {
+    slug: 'audited-access-with-teleport',
+    title: 'Audited access to clusters and databases behind SSO',
+    summary:
+      'How I put audited, SSO-based access in front of our Kubernetes clusters and a few dozen Postgres databases, and onboarded engineers onto it.',
+    tags: ['Teleport', 'Kubernetes', 'PostgreSQL', 'Okta', 'AWS'],
+    context:
+      'My team runs several Kubernetes clusters and a few dozen Postgres databases, split between production and non-production. Engineers need hands-on access to them to debug and support production. Teleport is now the access layer in front of all of it, signed in through our company SSO.',
+    problem:
+      "Access was mostly granted through AWS account-level permissions. That is broad by nature, and it left real gaps in production: anyone with the account access could reach far more than they needed. Nothing recorded what someone did inside a session, so we couldn't answer who ran what. It was also hard to scope access to a person or a task. A compliance audit was coming, and it needed least-privilege access and session-level auditing. The replacement also had to be easy enough that people would use it instead of working around it.",
+    whatIDid:
+      'I owned the Teleport agent and configuration for every cluster and database. I deployed an agent to each cluster, registered each database, and mapped SSO groups to roles, with production scoped more tightly than non-production. I also owned communication through the rollout. I told users what would change and when, and onboarded about a dozen engineers one by one over a month or two, as each was approved for a license. I fixed the rough edges they hit before the next person started.',
+    result:
+      "Every cluster and database is registered in Teleport, with sessions tied to a named person and recorded. I'm now moving production over so Teleport is the only way in, and that is what makes production fully audited. About a dozen engineers are onboarded. The access controls held up in the compliance audit we passed.",
   },
 ];

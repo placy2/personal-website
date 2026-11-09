@@ -4,12 +4,14 @@
 
 GH #169 documented why parkerlacy.com was blocked by corporate web filters. The
 highest-leverage fix — prerendering the four routes to real static HTML with proper
-metadata, plus `robots.txt`/`sitemap.xml`/`security.txt` — landed in the PR this runbook
-accompanies, entirely in application code and one additive Terraform diff (widening the S3
-upload glob to include `.txt`/`.xml`).
+metadata, plus `robots.txt`/`sitemap.xml`/`security.txt` — landed in application code
+plus one additive Terraform diff (widening the S3 upload glob to include `.txt`/`.xml`).
+
+**Status:** item 3 (routing half) is done via a CloudFront Function. Items 1 (`www`), 2 (DNS trust
+records), 4 (CSP) and 5 (OAC) have not been applied.
 
 Everything below requires changes to shared AWS infrastructure — DNS, CloudFront routing,
-response headers, or the S3 origin model — and was deliberately kept out of that PR. These
+response headers, or the S3 origin model — and was deliberately kept out of that change. These
 carry real risk (DNS propagation, cert validation, changing how every request is routed)
 and should be reviewed and applied on their own, not bundled with an app-code change.
 
@@ -25,7 +27,7 @@ key at all.
 
 ## What "direct load of a non-home route" actually does today
 
-Verified during the app-code PR, correcting the issue's original "302 redirect to
+Behavior before the CloudFront Function in item 3 landed (kept for context), correcting the issue's original "302 redirect to
 `/about/`" assumption:
 
 1. Browser requests `GET /about`.

@@ -25,7 +25,6 @@ const Home: React.FC = () => {
         <p>{APP_CONFIG.intro}</p>
         <p>{APP_CONFIG.personal}</p>
       </div>
-      {/* TODO: point the second button at /architecture once that page exists. */}
       <div className="home-actions">
         <Link className="button" to={ROUTES.WORK}>
           See my work
