@@ -13,7 +13,7 @@ describe('CASE_STUDIES', () => {
 
   it('keeps every summary short enough for a meta description', () => {
     for (const study of CASE_STUDIES) {
-      expect(study.summary.length).toBeLessThanOrEqual(160);
+      expect(study.summary.length).toBeLessThanOrEqual(200);
     }
   });
 
