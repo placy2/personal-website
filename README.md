@@ -12,7 +12,7 @@
 ![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript 6](https://img.shields.io/badge/TypeScript-6-3178C6?logo=typescript&logoColor=white)
 ![Vite 8](https://img.shields.io/badge/Vite-8-646CFF?logo=vite&logoColor=white)
-![Terraform ≥1.17](https://img.shields.io/badge/Terraform-%E2%89%A51.13-844FBA?logo=terraform&logoColor=white)
+![Terraform ≥1.17](https://img.shields.io/badge/Terraform-%E2%89%A51.17-844FBA?logo=terraform&logoColor=white)
 ![AWS S3 + CloudFront](https://img.shields.io/badge/AWS-S3%20%2B%20CloudFront-232F3E?logo=data:image/svg%2bxml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xOS4zNSAxMC4wNEE3LjQ5IDcuNDkgMCAwIDAgMTIgNEM5LjExIDQgNi42IDUuNjQgNS4zNSA4LjA0QTUuOTk0IDUuOTk0IDAgMCAwIDAgMTRjMCAzLjMxIDIuNjkgNiA2IDZoMTNjMi43NiAwIDUtMi4yNCA1LTUgMC0yLjY0LTIuMDUtNC43OC00LjY1LTQuOTZ6Ii8+PC9zdmc+)
 
 Personal portfolio site for [parkerlacy.com](https://parkerlacy.com): a statically prerendered React app on AWS (S3 + CloudFront + Route 53), managed with Terraform and deployed through GitHub Actions. There is no backend.
