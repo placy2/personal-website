@@ -68,8 +68,65 @@ resource "aws_s3_bucket_website_configuration" "hosting" {
   }
 }
 
-data "aws_cloudfront_response_headers_policy" "security_headers" {
-  name = "Managed-SecurityHeadersPolicy"
+# Replaces the AWS managed SecurityHeadersPolicy. Keeps its nosniff,
+# X-Frame-Options and Referrer-Policy values, adds a CSP and Permissions-Policy,
+# adds includeSubDomains to HSTS, and drops the deprecated X-XSS-Protection.
+#
+# The CSP assumes the build is same-origin only: Vite emits external module
+# scripts and stylesheets, and the only inline <script> blocks are
+# type="application/ld+json" (data, not executed). Adding a third-party script,
+# font, image or analytics beacon means updating this policy, or the browser
+# will block it in prod only (dev is S3-only and never gets these headers).
+# HSTS preload is deliberately off: preload-list removal is slow and manual.
+resource "aws_cloudfront_response_headers_policy" "security_headers" {
+  count   = var.enable_cloudfront ? 1 : 0
+  name    = "${var.environment}-personal-website-security-headers"
+  comment = "Security headers incl. CSP and Permissions-Policy for ${var.domain_name}"
+
+  security_headers_config {
+    content_security_policy {
+      content_security_policy = join("; ", [
+        "default-src 'self'",
+        "script-src 'self'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'self'",
+      ])
+      override = true
+    }
+
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "SAMEORIGIN"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      preload                    = false
+      override                   = true
+    }
+  }
+
+  custom_headers_config {
+    items {
+      header   = "Permissions-Policy"
+      value    = "camera=(), microphone=(), geolocation=()"
+      override = true
+    }
+  }
 }
 
 # Rewrites /about -> /about/index.html so direct loads get each route's own
@@ -136,7 +193,7 @@ resource "aws_cloudfront_distribution" "distribution" {
     allowed_methods            = ["GET", "HEAD"]
     cached_methods             = ["GET", "HEAD"]
     target_origin_id           = aws_s3_bucket.bucket.bucket_regional_domain_name
-    response_headers_policy_id = data.aws_cloudfront_response_headers_policy.security_headers.id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers[0].id
 
     function_association {
       event_type   = "viewer-request"
