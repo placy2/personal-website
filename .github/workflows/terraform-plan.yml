@@ -4,15 +4,19 @@ name: Terraform Plan
 # Actions PRs never run a secret-bearing job. Plain `pull_request`, scoped to
 # terraform changes only.
 #
+# No `branches:` filter, so stacked PRs (base = another feature branch, not
+# main) get a plan too. Each stacked PR's plan is cumulative: it shows its own
+# change plus everything below it in the stack, against live state.
+#
 # NOTE: `pull_request` runs triggered by Dependabot use *Dependabot secrets*,
 # not repo secrets — duplicate AWS_DEPLOY_ROLE_ARN into Settings → Secrets and
 # variables → Dependabot for Dependabot terraform PRs.
 
 on:
   pull_request:
-    branches: [main]
     paths:
       - "terraform/**"
+      - ".github/workflows/terraform-plan.yml"
 
 permissions:
   contents: read
@@ -27,12 +31,25 @@ env:
 
 jobs:
   terraform-plan:
-    name: Terraform Plan (Dev)
+    name: Terraform Plan (${{ matrix.label }})
     runs-on: ubuntu-latest
-    # Not for deploy gating — this job only plans. It switches the OIDC `sub`
-    # claim from the untrusted `repo:OWNER/REPO:pull_request` form to
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - label: Dev
+            env: dev
+          # Dev is S3-only, so CloudFront, Route 53 and ACM changes only show
+          # up in a prod plan. Read-only: this workflow never applies.
+          - label: Prod
+            env: prod
+    # Not for deploy gating — this job only plans, for both matrix entries. It
+    # switches the OIDC `sub` claim from the untrusted
+    # `repo:OWNER/REPO:pull_request` form to
     # `repo:OWNER/REPO:environment:development`, which the aws-infra repo's trust
-    # policy (github-oidc/) already allows. Without it AssumeRoleWithWebIdentity is denied.
+    # policy (github-oidc/) already allows. Without it AssumeRoleWithWebIdentity
+    # is denied. Dev and prod share one deploy role, so the prod plan needs no
+    # extra trust or permissions.
     environment: development
 
     steps:
@@ -70,29 +87,38 @@ jobs:
 
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init -backend-config=env/dev.s3.tfbackend
+        run: terraform init -backend-config=env/${{ matrix.env }}.s3.tfbackend
 
-      - name: Terraform Plan (Dev)
+      - name: Terraform Plan (${{ matrix.label }})
         working-directory: ./terraform
         run: |
           set -o pipefail
-          terraform plan -lock-timeout=5m -var-file="env/dev.tfvars" -no-color 2>&1 | tee plan.txt
+          terraform plan -lock-timeout=5m -var-file="env/${{ matrix.env }}.tfvars" -no-color 2>&1 | tee plan.txt
 
       - name: Write plan summary
         if: always()
         working-directory: ./terraform
         run: |
           if [ ! -f plan.txt ]; then
-            echo "## Terraform Plan (dev)" >> "$GITHUB_STEP_SUMMARY"
+            echo "## Terraform Plan (${{ matrix.env }})" >> "$GITHUB_STEP_SUMMARY"
             echo "No plan output produced (a step before the plan failed)." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           {
-            echo "## Terraform Plan (dev)"
+            echo "## Terraform Plan (${{ matrix.env }})"
             echo
             # Headline: the resource-count line, or the no-changes/error line
             grep -E '^(Plan:|No changes\.|Error:)' plan.txt | head -1 \
               || echo "⚠️ Plan did not produce a summary line (see full output below)."
+            echo
+            # Every build stamps its commit SHA into the HTML, so S3 object
+            # churn shows up in nearly every plan. List everything else on its
+            # own so infra changes aren't buried under it.
+            echo "Infra changes (excluding \`aws_s3_object.file\`):"
+            echo
+            echo '```'
+            grep -E '^  # ' plan.txt | grep -v 'aws_s3_object\.file\[' || echo "(none)"
+            echo '```'
             echo
             echo "<details><summary>Full plan output</summary>"
             echo
