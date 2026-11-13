@@ -7,8 +7,8 @@ highest-leverage fix — prerendering the four routes to real static HTML with p
 metadata, plus `robots.txt`/`sitemap.xml`/`security.txt` — landed in application code
 plus one additive Terraform diff (widening the S3 upload glob to include `.txt`/`.xml`).
 
-**Status:** item 3 (routing half) is done via a CloudFront Function. Item 4 (CSP) is being applied on 11/12. Item 3 (real 404s) is written but not yet applied. Items 1 (`www`),
-2 (DNS trust records) and 5 (OAC) have not been applied.
+**Status:** item 3 (routing half) is done via a CloudFront Function. Item 4 (CSP) is being applied on 11/12. Items 3 (real 404s) and 1 (`www`) are written but not yet applied.
+Items 2 (DNS trust records) and 5 (OAC) have not been applied.
 
 Everything below requires changes to shared AWS infrastructure — DNS, CloudFront routing,
 response headers, or the S3 origin model — and was deliberately kept out of that change. These
@@ -48,6 +48,15 @@ Behavior before the CloudFront Function in item 3 landed (kept for context), cor
 ---
 
 ## 1. `www.parkerlacy.com` (issue finding #3)
+
+> **Status:** written, not yet applied. The cert gets the `www` SAN, which **replaces** it.
+> `create_before_destroy` issues and validates the new cert and attaches it before deleting the
+> old one, so the plan shows a cert replacement but no downtime. Also added: the `www` alias,
+> `aws_route53_record.www` (A + AAAA) and a `Host`-based 301 to the apex at the top of
+> `functions/rewrite-index.js` (path kept, query string dropped). It reuses the existing
+> function, so nothing new is associated with the distribution.
+> **Verify after apply:** `curl -sI https://www.parkerlacy.com/about` → `301`,
+> `location: https://parkerlacy.com/about`.
 
 **Risk: low.** Additive DNS + CloudFront alias; doesn't touch existing routing.
 

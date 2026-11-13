@@ -129,8 +129,10 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
   }
 }
 
-# Rewrites /about -> /about/index.html so direct loads get each route's own
-# prerendered page instead of the home page. See functions/rewrite-index.js.
+# Viewer-request function: 301s www.<domain> to the apex, and rewrites
+# /about -> /about/index.html so direct loads get each route's own prerendered
+# page instead of the home page. See functions/rewrite-index.js. (The resource
+# name predates the redirect; renaming it would replace the function.)
 resource "aws_cloudfront_function" "rewrite_index" {
   count   = var.enable_cloudfront ? 1 : 0
   name    = "${var.environment}-personal-website-rewrite-index"
@@ -169,7 +171,8 @@ resource "aws_cloudfront_distribution" "distribution" {
     }
   }
 
-  aliases = [var.domain_name]
+  # www is only ever answered with a 301 to the apex (functions/rewrite-index.js).
+  aliases = [var.domain_name, "www.${var.domain_name}"]
 
   viewer_certificate {
     acm_certificate_arn      = aws_acm_certificate_validation.cert[0].certificate_arn
@@ -222,7 +225,10 @@ resource "aws_acm_certificate" "cert" {
   count             = var.enable_cloudfront ? 1 : 0
   domain_name       = var.domain_name
   validation_method = "DNS"
-  # Add if www is needed later: subject_alternative_names = ["www.${var.domain_name}"]
+  # Changing SANs replaces the cert. create_before_destroy below makes that
+  # safe: the new cert is issued, validated and attached to the distribution
+  # before the old one is deleted.
+  subject_alternative_names = ["www.${var.domain_name}"]
 
   lifecycle {
     create_before_destroy = true
@@ -252,6 +258,20 @@ resource "aws_route53_record" "site" {
   for_each = var.enable_cloudfront ? toset(["A", "AAAA"]) : toset([])
   zone_id  = aws_route53_zone.zone[0].zone_id
   name     = var.domain_name
+  type     = each.key
+
+  alias {
+    name                   = aws_cloudfront_distribution.distribution[0].domain_name
+    zone_id                = aws_cloudfront_distribution.distribution[0].hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# www.<domain> points at the same distribution, which redirects it to the apex.
+resource "aws_route53_record" "www" {
+  for_each = var.enable_cloudfront ? toset(["A", "AAAA"]) : toset([])
+  zone_id  = aws_route53_zone.zone[0].zone_id
+  name     = "www.${var.domain_name}"
   type     = each.key
 
   alias {
