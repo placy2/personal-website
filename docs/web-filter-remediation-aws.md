@@ -7,8 +7,8 @@ highest-leverage fix — prerendering the four routes to real static HTML with p
 metadata, plus `robots.txt`/`sitemap.xml`/`security.txt` — landed in application code
 plus one additive Terraform diff (widening the S3 upload glob to include `.txt`/`.xml`).
 
-**Status:** item 3 (routing half) is done via a CloudFront Function. Items 1 (`www`), 2 (DNS trust
-records), 4 (CSP) and 5 (OAC) have not been applied.
+**Status:** item 3 (routing half) is done via a CloudFront Function. Item 4 (CSP) is being applied on 11/12. Items 1 (`www`), 2 (DNS trust records), 3 (real 404s) and 5 (OAC) have not
+been applied.
 
 Everything below requires changes to shared AWS infrastructure — DNS, CloudFront routing,
 response headers, or the S3 origin model — and was deliberately kept out of that change. These
@@ -166,6 +166,15 @@ known-bad-path check asserting a real 404 (see the placeholder note in that scri
 history — GH #169's "Regression guard" section called this out explicitly).
 
 ## 4. CSP + Permissions-Policy (issue finding #5)
+
+> **Status:** written, not yet applied. `aws_cloudfront_response_headers_policy.security_headers`
+> replaces the managed policy. It adds the CSP below plus `object-src 'none'`, `base-uri 'self'`,
+> `form-action 'self'` and `frame-ancestors 'self'`, and adds `includeSubDomains` to HSTS without
+> `preload`. It keeps nosniff, `X-Frame-Options: SAMEORIGIN` and the referrer policy, and drops
+> `X-XSS-Protection`. Before writing it, the built `dist/` was checked. It has no third-party
+> loads, and its only inline scripts are `application/ld+json`. All sitemap routes were then
+> loaded in Chromium under this exact CSP with no violations. Dev is S3-only and never gets
+> these headers, so verify against **prod** after apply, not dev.
 
 **Risk: low-medium.** The site loads no third-party resources today, so a strict CSP is
 low-risk, but get the `script-src`/`style-src` values wrong and the app breaks silently in
