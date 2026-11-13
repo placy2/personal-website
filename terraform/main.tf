@@ -281,6 +281,45 @@ resource "aws_route53_record" "www" {
   }
 }
 
+# DNS trust records (GH #169 finding #4). The domain sends no mail, so SPF and
+# DMARC say "reject everything" and DMARC publishes no report address. DNSSEC
+# is deliberately not here: it needs a manual DS record at the registrar.
+
+# Only Amazon may issue certs for the domain (and www, which inherits the apex
+# record). These are the four issuer domains AWS documents for ACM; listing all
+# of them means a renewal can't be blocked by ACM picking a different one.
+resource "aws_route53_record" "caa" {
+  count   = var.environment == "prod" ? 1 : 0
+  zone_id = aws_route53_zone.zone[0].zone_id
+  name    = var.domain_name
+  type    = "CAA"
+  ttl     = 3600
+  records = [
+    "0 issue \"amazon.com\"",
+    "0 issue \"amazontrust.com\"",
+    "0 issue \"awstrust.com\"",
+    "0 issue \"amazonaws.com\"",
+  ]
+}
+
+resource "aws_route53_record" "spf" {
+  count   = var.environment == "prod" ? 1 : 0
+  zone_id = aws_route53_zone.zone[0].zone_id
+  name    = var.domain_name
+  type    = "TXT"
+  ttl     = 3600
+  records = ["v=spf1 -all"]
+}
+
+resource "aws_route53_record" "dmarc" {
+  count   = var.environment == "prod" ? 1 : 0
+  zone_id = aws_route53_zone.zone[0].zone_id
+  name    = "_dmarc.${var.domain_name}"
+  type    = "TXT"
+  ttl     = 3600
+  records = ["v=DMARC1; p=reject"]
+}
+
 resource "aws_acm_certificate_validation" "cert" {
   count                   = var.enable_cloudfront ? 1 : 0
   certificate_arn         = aws_acm_certificate.cert[0].arn
