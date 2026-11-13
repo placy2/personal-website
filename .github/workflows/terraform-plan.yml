@@ -14,9 +14,23 @@ name: Terraform Plan
 
 on:
   pull_request:
+    # `closed` is listed only so merging/closing a PR starts a run in the same
+    # concurrency group below, which cancels any run still waiting on the
+    # `development` environment's required-reviewer gate. The job itself
+    # skips on `closed`.
+    types: [opened, synchronize, reopened, closed]
     paths:
       - "terraform/**"
       - ".github/workflows/terraform-plan.yml"
+
+# The job runs in the `development` environment, which requires reviewer
+# approval. Without this group, every push leaves its predecessor stuck in
+# "Waiting" until GitHub's 30-day timeout (stacked-PR rebases add one per PR).
+# Plans run with -lock=false, so cancelling one mid-plan cannot strand a state
+# lock.
+concurrency:
+  group: terraform-plan-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -33,6 +47,7 @@ jobs:
   terraform-plan:
     name: Terraform Plan (${{ matrix.label }})
     runs-on: ubuntu-latest
+    if: github.event.action != 'closed'
     strategy:
       fail-fast: false
       matrix:
@@ -93,7 +108,9 @@ jobs:
         working-directory: ./terraform
         run: |
           set -o pipefail
-          terraform plan -lock-timeout=5m -var-file="env/${{ matrix.env }}.tfvars" -no-color 2>&1 | tee plan.txt
+          # Read-only plan: skip the state lock so a cancelled run (see
+          # concurrency above) can't leave a stale lock for deploys.
+          terraform plan -lock=false -var-file="env/${{ matrix.env }}.tfvars" -no-color 2>&1 | tee plan.txt
 
       - name: Write plan summary
         if: always()
