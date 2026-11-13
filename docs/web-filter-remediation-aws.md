@@ -7,8 +7,8 @@ highest-leverage fix — prerendering the four routes to real static HTML with p
 metadata, plus `robots.txt`/`sitemap.xml`/`security.txt` — landed in application code
 plus one additive Terraform diff (widening the S3 upload glob to include `.txt`/`.xml`).
 
-**Status:** item 3 (routing half) is done via a CloudFront Function. Item 4 (CSP) is being applied on 11/12. Items 1 (`www`), 2 (DNS trust records), 3 (real 404s) and 5 (OAC) have not
-been applied.
+**Status:** item 3 (routing half) is done via a CloudFront Function. Item 4 (CSP) is being applied on 11/12. Item 3 (real 404s) is written but not yet applied. Items 1 (`www`),
+2 (DNS trust records) and 5 (OAC) have not been applied.
 
 Everything below requires changes to shared AWS infrastructure — DNS, CloudFront routing,
 response headers, or the S3 origin model — and was deliberately kept out of that change. These
@@ -130,8 +130,15 @@ DNSSEC failures are the hardest of this group to unwind quickly.
 > (`terraform/functions/rewrite-index.js`) rewrites extensionless paths to
 > `<path>/index.html`, so direct loads of `/about`, `/projects` and `/resume` get their
 > own prerendered page. It rewrites every extensionless path rather than a list of known
-> routes, so there's no list to keep in sync with `routeMeta.ts`. Real 404s (replacing
-> `custom_error_response`) are still to do.
+> routes, so there's no list to keep in sync with `routeMeta.ts`.
+>
+> **Real 404s: written, not yet applied.** `custom_error_response` is removed, so CloudFront
+> passes through S3's 404 status. The body is S3's error document, `index.html` (the home
+> page's markup). `main.tsx` sees the `data-prerendered-route` mismatch and client-renders the
+> app's new catch-all `NotFound` route, so people see "Page not found". `scripts/smoke-test.sh`
+> Test 10 asserts a 404 for an unknown path; it already passes against dev's S3 website
+> endpoint. Item 5 (OAC) must keep this: a REST/OAC origin returns **403** for missing keys
+> unless the policy grants `s3:ListBucket`, so it needs a 403->404 mapping or that grant.
 
 **Risk: medium.** This changes what every request that isn't a literal S3 key resolves to
 — get the CloudFront Function's route list wrong and a legitimate app route 404s for real

@@ -35,11 +35,10 @@ for (const { path, heading } of routes) {
   });
 
   // A direct/cold load of a non-home route (as opposed to client-side nav)
-  // is a full navigation, so it exercises the same fallback path a
-  // bookmark, shared link, or crawler hits. Until issue #169's CloudFront
-  // routing work lands, that fallback can serve the wrong prerendered page
-  // (see scripts/prerender.mjs's data-prerendered-route guard) — this
-  // catches a regression of that guard, which otherwise throws a silent,
+  // is a full navigation, like a bookmark, shared link, or crawler. `vite
+  // preview` serves the root index.html for extensionless paths, so this
+  // exercises main.tsx's data-prerendered-route guard (see
+  // scripts/prerender.mjs) — a regression there throws a silent,
   // build-passing hydration mismatch.
   test(`${path} has no console errors on a direct load`, async ({ page }) => {
     const errors = collectConsoleErrors(page);
@@ -88,6 +87,17 @@ for (const study of CASE_STUDIES) {
     expect(body).toContain(study.title);
   });
 }
+
+// The status code is prod's job (S3 404, asserted by scripts/smoke-test.sh);
+// `vite preview` answers 200. This covers what a person sees: home's HTML as
+// the body, re-rendered client-side as the catch-all page without errors.
+test('an unknown path renders the not-found page', async ({ page }) => {
+  const errors = collectConsoleErrors(page);
+  await page.goto('/definitely-not-a-real-page');
+  await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+  await expect(page).toHaveTitle('Page not found - Parker Lacy');
+  expect(errors).toEqual([]);
+});
 
 test('no console errors on load', async ({ page }) => {
   const errors = collectConsoleErrors(page);

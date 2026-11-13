@@ -148,12 +148,10 @@ resource "aws_cloudfront_distribution" "distribution" {
   is_ipv6_enabled = true
   comment         = "${var.environment} - ${var.domain_name}"
 
-  custom_error_response {
-    error_code            = 404
-    response_code         = 200
-    response_page_path    = "/index.html"
-    error_caching_min_ttl = 60
-  }
+  # No custom_error_response: unknown paths keep S3's real 404 status. The
+  # website endpoint's error_document (index.html) is the body, and the app's
+  # catch-all route renders "Page not found" client-side. A 404->200 remap here
+  # would tell crawlers every typo'd URL is a duplicate of the home page.
 
   origin {
     domain_name = aws_s3_bucket_website_configuration.hosting.website_endpoint

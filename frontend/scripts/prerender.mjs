@@ -30,10 +30,10 @@ function applyRoute(template, route) {
   }
 
   // data-prerendered-route lets main.tsx detect when it was served the wrong
-  // page's static HTML (e.g. a direct load of /about served dist/index.html's
-  // content as an interim SPA fallback until issue #169's CloudFront routing
-  // fix lands) and fall back to a plain client render instead of hydrating
-  // mismatched markup. route.path comes from ROUTE_META, not user input.
+  // page's static HTML (e.g. an unknown path served dist/index.html as S3's
+  // 404 error document) and fall back to a plain client render instead of
+  // hydrating mismatched markup. route.path comes from ROUTE_META, not user
+  // input.
   const markup = render(route.path);
   return template
     .replace(HEAD_PLACEHOLDER, renderHead(route))

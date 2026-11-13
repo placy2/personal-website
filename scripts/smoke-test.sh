@@ -182,6 +182,21 @@ for LOC in $SITEMAP_LOCS; do
   fi
 done
 
+# Test 10: unknown paths return a real 404, not the home page with a 200 (GH
+# #169). A 404->200 fallback tells crawlers every mistyped URL is a duplicate
+# of the home page. No -L: dev's S3 website endpoint 404s directly, and prod's
+# CloudFront passes S3's 404 through.
+echo "Test 10: Checking an unknown path returns 404..."
+BAD_PATH="/smoke-test-definitely-not-a-real-page-$RANDOM"
+BAD_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${URL%/}$BAD_PATH")
+
+if [ "$BAD_STATUS" = "404" ]; then
+  echo -e "${GREEN}✓ $BAD_PATH: 404${NC}"
+else
+  echo -e "${RED}✗ $BAD_PATH returned $BAD_STATUS (expected 404 — is a 404->200 fallback back?)${NC}"
+  exit 1
+fi
+
 echo "----------------------------------------"
 if [ "$ALL_FOUND" = true ]; then
   echo -e "${GREEN}✅ All smoke tests passed!${NC}"
