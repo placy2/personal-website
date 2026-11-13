@@ -8,6 +8,7 @@ import Work from './pages/Work';
 import CaseStudy from './pages/CaseStudy';
 import Projects from './pages/Projects';
 import Resume from './pages/Resume';
+import NotFound from './pages/NotFound';
 import Footer from './components/Footer';
 import ErrorBoundary from './components/ErrorBoundary';
 import { ROUTE_META } from './data/routeMeta';
@@ -34,6 +35,9 @@ export const AppRoutes: React.FC = () => {
             <Route path="/work/:slug" element={<CaseStudy />} />
             <Route path="/projects" element={<Projects />} />
             <Route path="/resume" element={<Resume />} />
+            {/* Client-side only: not in ROUTE_META, so never prerendered or in
+                the sitemap. Unknown paths get a real 404 from S3/CloudFront. */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </RouteBoundary>
       </main>

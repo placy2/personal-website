@@ -8,6 +8,7 @@ import Work from './Work';
 import CaseStudy from './CaseStudy';
 import Projects from './Projects';
 import Resume from './Resume';
+import NotFound from './NotFound';
 import { expectNoA11yViolations } from '../test/axe';
 import { CASE_STUDIES } from '../data/caseStudies';
 
@@ -57,6 +58,11 @@ describe('Page accessibility', () => {
 
   it('Resume page has no WCAG A/AA violations', async () => {
     const { container } = renderInMain(<Resume />);
+    await expectNoA11yViolations(container);
+  });
+
+  it('Not found page has no WCAG A/AA violations', async () => {
+    const { container } = renderInMain(<NotFound />);
     await expectNoA11yViolations(container);
   });
 });

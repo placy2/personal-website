@@ -27,11 +27,12 @@ const app = (
 
 // Prerendered routes (see scripts/prerender.mjs) ship non-empty markup keyed
 // to the route it was built for. Only hydrate when that matches where we
-// actually loaded — a direct load of e.g. /about can be served
-// dist/index.html's markup as an interim SPA fallback (until issue #169's
-// CloudFront routing work lands), and hydrating mismatched markup throws a
-// React hydration error. Falling back to a plain client render here trades a
-// harmless "container not empty" warning for a broken page.
+// actually loaded. An unknown path is served dist/index.html's markup as S3's
+// 404 error document (and `vite preview` does the same for any extensionless
+// path), and hydrating mismatched markup throws a React hydration error.
+// Falling back to a plain client render here lets the catch-all route show
+// "Page not found" and trades a harmless "container not empty" warning for a
+// broken page.
 const normalize = (path: string) => (path.length > 1 ? path.replace(/\/+$/, '') : path);
 const prerenderedForCurrentRoute =
   container.dataset.prerenderedRoute !== undefined &&

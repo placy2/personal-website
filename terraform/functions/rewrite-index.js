@@ -2,17 +2,17 @@
 //
 // Each prerendered route lives at <route>/index.html in S3. The S3 website
 // origin only maps a "directory" URL to its index.html when the URL ends in
-// "/", so a direct load of /about 404s, and the distribution's error page then
-// serves the home page's HTML instead. This rewrites extensionless paths to
-// their index.html before the request reaches S3.
+// "/", so without this a direct load of /about 404s. This rewrites
+// extensionless paths to their index.html before the request reaches S3.
 //
 //   /           -> /index.html
 //   /about      -> /about/index.html
 //   /about/     -> /about/index.html
 //   /robots.txt -> unchanged (has an extension)
 //
-// Unknown paths (/nope -> /nope/index.html) still 404 at S3 and fall through
-// to custom_error_response, same as before. Real 404s are a separate change.
+// Unknown paths (/nope -> /nope/index.html) have no such key, so S3 returns a
+// real 404 (body: its error document, index.html) and CloudFront passes it
+// through unchanged.
 function handler(event) {
   var request = event.request;
   var uri = request.uri;
