@@ -10,7 +10,34 @@ const source = readFileSync(new URL('./rewrite-index.js', import.meta.url), 'utf
 const context = vm.createContext({});
 vm.runInContext(source, context);
 
-const rewrite = uri => context.handler({ request: { uri, headers: {} } }).uri;
+const handle = (uri, host) =>
+  context.handler({
+    request: { uri, headers: host ? { host: { value: host } } : {}, querystring: {} },
+  });
+const rewrite = uri => handle(uri, 'parkerlacy.com').uri;
+
+test('redirects www to the apex with a 301, keeping the path', () => {
+  for (const [uri, location] of [
+    ['/', 'https://parkerlacy.com/'],
+    ['/about', 'https://parkerlacy.com/about'],
+    ['/work/some-slug/', 'https://parkerlacy.com/work/some-slug/'],
+    ['/robots.txt', 'https://parkerlacy.com/robots.txt'],
+  ]) {
+    const response = handle(uri, 'www.parkerlacy.com');
+    assert.equal(response.statusCode, 301);
+    assert.equal(response.headers.location.value, location);
+  }
+  assert.equal(
+    handle('/about', 'WWW.ParkerLacy.com').headers.location.value,
+    'https://parkerlacy.com/about'
+  );
+});
+
+test('does not redirect the apex, the CloudFront domain, or a missing Host', () => {
+  assert.equal(handle('/about', 'parkerlacy.com').statusCode, undefined);
+  assert.equal(handle('/about', 'd1234abcd.cloudfront.net').uri, '/about/index.html');
+  assert.equal(handle('/about').uri, '/about/index.html');
+});
 
 test('appends index.html to directory-style paths', () => {
   assert.equal(rewrite('/'), '/index.html');
