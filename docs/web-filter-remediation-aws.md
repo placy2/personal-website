@@ -7,8 +7,8 @@ highest-leverage fix — prerendering the four routes to real static HTML with p
 metadata, plus `robots.txt`/`sitemap.xml`/`security.txt` — landed in application code
 plus one additive Terraform diff (widening the S3 upload glob to include `.txt`/`.xml`).
 
-**Status:** item 3 (routing half) is done via a CloudFront Function. Item 4 (CSP) is being applied on 11/12. Items 3 (real 404s) and 1 (`www`) are written but not yet applied.
-Items 2 (DNS trust records) and 5 (OAC) have not been applied.
+**Status:** item 3 (routing half) is done via a CloudFront Function. Item 4 (CSP) is being applied on 11/12. Items 3 (real 404s), 1 (`www`) and 2 (CAA/SPF/DMARC) are written but
+not yet applied. Item 5 (OAC) and DNSSEC have not been started.
 
 Everything below requires changes to shared AWS infrastructure — DNS, CloudFront routing,
 response headers, or the S3 origin model — and was deliberately kept out of that change. These
@@ -80,6 +80,13 @@ distribution or cert (`create_before_destroy` on the cert should prevent that, b
 in the plan output before applying).
 
 ## 2. DNS trust records (issue finding #4)
+
+> **Status:** CAA, SPF and DMARC written, not yet applied. DNSSEC not started (it needs a manual
+> registrar step). Differences from the snippet below:
+> - CAA lists all four issuer domains AWS documents for ACM (`amazon.com`, `amazontrust.com`,
+>   `awstrust.com`, `amazonaws.com`), so whichever one ACM uses for renewal is authorized.
+> - DMARC is `v=DMARC1; p=reject` with **no `rua`**. The domain sends no mail, and a report
+>   address would be published in DNS.
 
 **Risk: low for CAA/SPF/DMARC (additive TXT/CAA records). Medium for DNSSEC** — a
 misconfigured DS record at the registrar can make the zone unresolvable; do this one
