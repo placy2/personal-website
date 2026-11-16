@@ -42,7 +42,7 @@ describe('Work Component', () => {
     ]);
   });
 
-  it('shows a side projects section after the case studies, linking only this site’s repo', () => {
+  it('shows a side projects section after the case studies: write-ups, then this site’s repo', () => {
     renderWork();
     const caseStudies = screen.getByRole('region', { name: 'Case studies' });
     const sideProjects = screen.getByRole('region', { name: 'Side projects' });
@@ -54,11 +54,24 @@ describe('Work Component', () => {
     ).toBeInTheDocument();
 
     const links = within(sideProjects).getAllByRole('link');
-    expect(links).toHaveLength(1);
-    expect(links[0]).toHaveAccessibleName('Personal Site (This!)');
-    expect(links[0]).toHaveAttribute('href', 'https://github.com/placy2/personal-website');
-    expect(links[0]).toHaveAttribute('target', '_blank');
-    expect(links[0]).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(links).toHaveLength(2);
+    expect(links[0]).toHaveAccessibleName(
+      'A baby tracker that costs less than the app it replaced'
+    );
+    expect(links[0]).toHaveAttribute('href', '/work/self-hosted-baby-tracker');
+    expect(links[0]).not.toHaveAttribute('target');
+    expect(links[1]).toHaveAccessibleName('Personal Site (This!)');
+    expect(links[1]).toHaveAttribute('href', 'https://github.com/placy2/personal-website');
+    expect(links[1]).toHaveAttribute('target', '_blank');
+    expect(links[1]).toHaveAttribute('rel', 'noopener noreferrer');
+  });
+
+  it('keeps side projects out of the case studies section', () => {
+    renderWork();
+    const caseStudies = screen.getByRole('region', { name: 'Case studies' });
+    for (const study of CASE_STUDIES.filter(entry => entry.kind === 'side')) {
+      expect(within(caseStudies).queryByText(study.title)).not.toBeInTheDocument();
+    }
   });
 
   it('does not list the removed coursework or Telegram bot projects', () => {

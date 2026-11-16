@@ -53,16 +53,39 @@ test('/work shows case studies, then side projects', async ({ page }) => {
   await page.goto('/work');
   const caseStudies = page.getByRole('region', { name: 'Case studies' });
   await expect(caseStudies.getByRole('heading', { level: 3 })).toHaveText(
-    CASE_STUDIES.map(study => study.title)
+    CASE_STUDIES.filter(study => study.kind !== 'side').map(study => study.title)
   );
   const sideProjects = page.getByRole('region', { name: 'Side projects' });
-  await expect(sideProjects.getByRole('link')).toHaveCount(1);
+  const sideStudies = CASE_STUDIES.filter(study => study.kind === 'side');
+  await expect(sideProjects.getByRole('link')).toHaveCount(sideStudies.length + 1);
+  for (const study of sideStudies) {
+    await expect(sideProjects.getByRole('link', { name: study.title })).toHaveAttribute(
+      'href',
+      `/work/${study.slug}`
+    );
+  }
   await expect(sideProjects.getByRole('link', { name: 'Personal Site (This!)' })).toHaveAttribute(
     'href',
     'https://github.com/placy2/personal-website'
   );
   await expect(page.getByText(/telegram|opioid/i)).toHaveCount(0);
 });
+
+// Figure images live in public/ and are referenced by path, so nothing in the
+// build would notice a missing or misnamed file; check the built site serves them.
+for (const study of CASE_STUDIES.filter(entry => entry.figures?.length)) {
+  test(`/work/${study.slug} serves every figure image`, async ({ page, request }) => {
+    await page.goto(`/work/${study.slug}`);
+    for (const figure of study.figures!) {
+      await expect(page.getByText(figure.caption)).toBeVisible();
+      for (const image of figure.images) {
+        await expect(page.getByAltText(image.alt)).toHaveAttribute('src', image.src);
+        const response = await request.get(image.src);
+        expect(response.status(), image.src).toBe(200);
+      }
+    }
+  });
+}
 
 test('the nav no longer offers a Projects page', async ({ page }) => {
   await page.goto('/');

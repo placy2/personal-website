@@ -37,18 +37,24 @@ describe('Page accessibility', () => {
     await expectNoA11yViolations(container);
   });
 
-  it('Case study page has no WCAG A/AA violations', async () => {
-    const { container } = render(
-      <MemoryRouter initialEntries={[`/work/${CASE_STUDIES[0].slug}`]}>
-        <main>
-          <Routes>
-            <Route path="/work/:slug" element={<CaseStudy />} />
-          </Routes>
-        </main>
-      </MemoryRouter>
-    );
-    await expectNoA11yViolations(container);
-  });
+  // The first study, plus the first one with figures (images and captions).
+  const a11ySlugs = [
+    ...new Set([CASE_STUDIES[0].slug, CASE_STUDIES.find(study => study.figures)?.slug]),
+  ].filter((slug): slug is string => Boolean(slug));
+  for (const slug of a11ySlugs) {
+    it(`Case study page "${slug}" has no WCAG A/AA violations`, async () => {
+      const { container } = render(
+        <MemoryRouter initialEntries={[`/work/${slug}`]}>
+          <main>
+            <Routes>
+              <Route path="/work/:slug" element={<CaseStudy />} />
+            </Routes>
+          </main>
+        </MemoryRouter>
+      );
+      await expectNoA11yViolations(container);
+    });
+  }
 
   it('Resume page has no WCAG A/AA violations', async () => {
     const { container } = renderInMain(<Resume />);

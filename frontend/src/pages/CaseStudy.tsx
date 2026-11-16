@@ -1,10 +1,10 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { CASE_STUDIES, type CaseStudy as CaseStudyData } from '../data/caseStudies';
+import { CASE_STUDIES, type CaseStudyFigure, type CaseStudySection } from '../data/caseStudies';
 import { ROUTES } from '../constants';
 import '../stylesheets/Work.css';
 
-const SECTIONS: { key: keyof CaseStudyData; heading: string }[] = [
+const SECTIONS: { key: CaseStudySection; heading: string }[] = [
   { key: 'context', heading: 'Context' },
   { key: 'problem', heading: 'Problem' },
   { key: 'whatIDid', heading: 'What I did' },
@@ -16,6 +16,29 @@ const BackLink: React.FC = () => (
   <p>
     <Link to={ROUTES.WORK}>&larr; All work</Link>
   </p>
+);
+
+const Figure: React.FC<{ figure: CaseStudyFigure }> = ({ figure }) => (
+  <figure
+    className={
+      figure.images.length > 1 ? 'case-study-figure case-study-figure-pair' : 'case-study-figure'
+    }
+  >
+    <div className="case-study-figure-images">
+      {figure.images.map(image => (
+        <img
+          key={image.src}
+          src={image.src}
+          alt={image.alt}
+          width={image.width}
+          height={image.height}
+          loading="lazy"
+          decoding="async"
+        />
+      ))}
+    </div>
+    <figcaption>{figure.caption}</figcaption>
+  </figure>
 );
 
 const CaseStudy: React.FC = () => {
@@ -45,10 +68,17 @@ const CaseStudy: React.FC = () => {
       </ul>
       {SECTIONS.map(({ key, heading }) =>
         study[key] ? (
-          <section key={key}>
-            <h2>{heading}</h2>
-            <p>{study[key]}</p>
-          </section>
+          <React.Fragment key={key}>
+            <section>
+              <h2>{heading}</h2>
+              <p>{study[key]}</p>
+            </section>
+            {study.figures
+              ?.filter(figure => figure.after === key)
+              .map(figure => (
+                <Figure key={figure.images[0].src} figure={figure} />
+              ))}
+          </React.Fragment>
         ) : null
       )}
     </article>
