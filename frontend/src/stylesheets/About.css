@@ -1,0 +1,58 @@
+/* Career timeline at the top of the About page: a year column beside each
+   entry, joined by a rule down the left edge. Static (no motion), and
+   sized by its text, so it can't shift layout after load. */
+.timeline {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-left: 2px solid var(--theme-border);
+}
+
+.timeline-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: var(--space-1) var(--space-3);
+  padding: 0 0 var(--space-3) var(--space-4);
+}
+
+.timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+/* Marker dot sitting on the left rule. */
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: calc(-0.4rem - 1px);
+  top: 0.55em;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background-color: var(--theme-purple);
+}
+
+.timeline-when {
+  font-weight: 600;
+  color: var(--theme-light-purple);
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-what {
+  margin: 0;
+}
+
+.timeline-org {
+  display: block;
+  font-weight: 600;
+}
+
+.timeline-role {
+  color: var(--theme-muted);
+}
+
+@media (max-width: 768px) {
+  .timeline-item {
+    grid-template-columns: 1fr;
+  }
+}

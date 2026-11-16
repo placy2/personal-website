@@ -1,8 +1,11 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CASE_STUDIES } from '../data/caseStudies';
-import { workPath } from '../constants';
+import { EXTERNAL_LINKS, workPath } from '../constants';
 import '../stylesheets/Work.css';
+
+const WORK_STUDIES = CASE_STUDIES.filter(study => study.kind !== 'side');
+const SIDE_STUDIES = CASE_STUDIES.filter(study => study.kind === 'side');
 
 const Work: React.FC = () => {
   return (
@@ -15,7 +18,7 @@ const Work: React.FC = () => {
       <section aria-labelledby="case-studies-heading">
         <h2 id="case-studies-heading">Case studies</h2>
         <ul className="case-study-list">
-          {CASE_STUDIES.map(study => (
+          {WORK_STUDIES.map(study => (
             <li key={study.slug} className="case-study-card">
               <h3>
                 <Link to={workPath(study.slug)}>{study.title}</Link>
@@ -28,6 +31,27 @@ const Work: React.FC = () => {
               </ul>
             </li>
           ))}
+        </ul>
+      </section>
+      <section aria-labelledby="side-projects-heading" className="side-projects">
+        <h2 id="side-projects-heading">Side projects</h2>
+        <ul className="side-project-list">
+          {SIDE_STUDIES.map(study => (
+            <li key={study.slug}>
+              <h3>
+                <Link to={workPath(study.slug)}>{study.title}</Link>
+              </h3>
+              <p>{study.summary}</p>
+            </li>
+          ))}
+          <li>
+            <h3>
+              <a href={EXTERNAL_LINKS.SITE_REPO} target="_blank" rel="noopener noreferrer">
+                Personal Site (This!)
+              </a>
+            </h3>
+            <p>My own site — React frontend with AWS hosting included, built with Terraform.</p>
+          </li>
         </ul>
       </section>
     </div>

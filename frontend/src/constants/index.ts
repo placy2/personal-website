@@ -14,13 +14,13 @@ export const APP_CONFIG = {
   title: 'Parker Lacy - Senior DevOps / Platform Engineer',
   headline: 'Senior DevOps / Platform Engineer in Aurora, CO (Denver metro).',
   intro:
-    'I work on the plumbing several dozen engineers rely on: clusters that scale themselves, build agents that patch and redeploy themselves every week, and audited access to production.',
+    'I work on the platform and delivery pieces engineers rely on: autoscaling, CI/CD, access control, cloud infrastructure management, and more.',
   personal:
     "Outside of work, I'm a proud dad and husband, and can often be found spending time with family, out on the disc golf course, or enjoying a good videogame.",
   // Meta / Open Graph description. Keep it under ~160 characters so search
   // results and link previews don't truncate it.
   summary:
-    'Senior DevOps / Platform Engineer in Aurora, CO (Denver metro), running Kubernetes, CI/CD, and access tooling for several dozen engineers.',
+    'Senior DevOps / Platform Engineer in Aurora, CO (Denver metro), running Kubernetes, CI/CD, and managing cloud infrastructure.',
   url: 'https://parkerlacy.com',
 } as const;
 
@@ -29,7 +29,6 @@ export const ROUTES = {
   HOME: '/',
   ABOUT: '/about',
   WORK: '/work',
-  PROJECTS: '/projects',
   RESUME: '/resume',
 } as const;
 
