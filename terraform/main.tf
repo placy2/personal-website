@@ -18,7 +18,8 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_encryption
 
 # Private bucket: only CloudFront (via OAC, see the policy below) can read it.
 resource "aws_s3_bucket_public_access_block" "bucket_access_block" {
-  bucket = aws_s3_bucket.bucket.id
+  depends_on = [aws_cloudfront_distribution.distribution]
+  bucket     = aws_s3_bucket.bucket.id
 
   block_public_acls       = true
   block_public_policy     = true
@@ -59,6 +60,11 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
 
 # Site content (frontend/dist) is uploaded by scripts/upload-site.sh after
 # apply, not by Terraform.
+
+moved {
+  from = aws_s3_bucket_website_configuration.hosting
+  to   = aws_s3_bucket_website_configuration.hosting[0]
+}
 
 # Replaces the AWS managed SecurityHeadersPolicy. Keeps its nosniff,
 # X-Frame-Options and Referrer-Policy values, adds a CSP and Permissions-Policy,
@@ -207,6 +213,22 @@ resource "aws_cloudfront_distribution" "distribution" {
   price_class = "PriceClass_100"
 
   tags = local.common_tags
+}
+
+# These were count-gated on the removed enable_cloudfront variable.
+moved {
+  from = aws_cloudfront_distribution.distribution[0]
+  to   = aws_cloudfront_distribution.distribution
+}
+
+moved {
+  from = aws_cloudfront_function.rewrite_index[0]
+  to   = aws_cloudfront_function.rewrite_index
+}
+
+moved {
+  from = aws_cloudfront_response_headers_policy.security_headers[0]
+  to   = aws_cloudfront_response_headers_policy.security_headers
 }
 
 # Route 53 hosted zone - only create if it's production environment

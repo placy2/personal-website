@@ -44,7 +44,7 @@ personal-website/
 │   ├── src/
 │   │   ├── components/   # Shared components
 │   │   ├── pages/        # One component per route
-│   │   ├── data/         # Case studies, projects, route metadata
+│   │   ├── data/         # Case studies, route metadata
 │   │   ├── constants/    # Shared constants
 │   │   ├── seo/          # Head tag generation
 │   │   └── stylesheets/  # CSS, one file per component

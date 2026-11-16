@@ -24,7 +24,7 @@ npm run lhci       # Lighthouse CI audit of dist/ (needs a prior build + Chrome)
 src/
 ├── components/     # Shared components (MenuBar, Footer, ...)
 ├── pages/          # One component per route
-├── data/           # Content as typed data (e.g. projects.ts — add a project here)
+├── data/           # Content as typed data (e.g. caseStudies.ts — add a case study here)
 ├── constants/      # App config, routes, external links, tech list
 ├── stylesheets/    # Plain CSS, one file per component/page
 └── assets/         # Images bundled by Vite

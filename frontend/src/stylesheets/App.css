@@ -234,6 +234,22 @@ footer a {
   font-size: 0.75rem;
 }
 
+/* UTILITIES */
+
+/* Hidden visually but still read by screen readers (e.g. a spoken word in
+   place of a decorative arrow). */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Media Queries */
 @media (max-width: 768px) {
   .headshot {

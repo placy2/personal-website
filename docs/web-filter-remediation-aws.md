@@ -20,7 +20,7 @@ before `/robots.txt`, `/sitemap.xml`, and `/.well-known/security.txt` would reso
 That's not the case — those are exact-key S3 objects (`robots.txt`,
 `.well-known/security.txt`), so the request path matches the object key exactly with no
 SPA-fallback ambiguity. They already work as of the app-code PR, no CloudFront change
-needed. What genuinely does need the fix below is `/about`, `/projects`, and `/resume`
+needed. What genuinely does need the fix below is `/about`, `/work`, and `/resume`
 loaded **directly** (not via client-side nav) — those are "directory-style" keys
 (`about/index.html`), and a request for `/about` (no trailing slash) doesn't match that
 key at all.
@@ -144,7 +144,7 @@ DNSSEC failures are the hardest of this group to unwind quickly.
 
 > **Status:** the routing half has landed. `aws_cloudfront_function.rewrite_index`
 > (`terraform/functions/rewrite-index.js`) rewrites extensionless paths to
-> `<path>/index.html`, so direct loads of `/about`, `/projects` and `/resume` get their
+> `<path>/index.html`, so direct loads of `/about`, `/work` and `/resume` get their
 > own prerendered page. It rewrites every extensionless path rather than a list of known
 > routes, so there's no list to keep in sync with `routeMeta.ts`.
 >
@@ -166,7 +166,7 @@ Replace `custom_error_response` (`terraform/main.tf:83-88`, currently 404→200�
 - Passes through requests for real files (anything with a `.` in the last path segment —
   covers `robots.txt`, `sitemap.xml`, `/assets/*`, `/.well-known/security.txt`, etc.)
   unmodified.
-- Rewrites a request matching one of the known app routes (`/`, `/about`, `/projects`,
+- Rewrites a request matching one of the known app routes (`/`, `/about`, `/work`,
   `/resume` — keep this list in sync with `frontend/src/data/routeMeta.ts`) to
   `<route>/index.html`, so `/about` serves the About page's own prerendered file instead
   of falling back to home's.
@@ -261,7 +261,7 @@ triple-checking before `apply`).
 1. **Item 1 (`www`) + item 2 (DNS records, DNSSEC last)** — small, independent, low-risk;
    land these first for quick wins.
 2. **Item 3 (real 404s / correct routing)** — the one that actually completes GH #169's
-   fix for `/about`, `/projects`, `/resume`. Landing this is also what triggers a
+   fix for `/about`, `/work`, `/resume`. Landing this is also what triggers a
    re-crawl worth submitting the vendor recategorization requests after (see GH #169's
    "Not fixable in this repo" section — Zscaler, Netskope, Palo Alto, Cisco Talos,
    Forcepoint/Symantec, FortiGuard).

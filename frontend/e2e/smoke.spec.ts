@@ -1,5 +1,4 @@
 import { test, expect, Page } from '@playwright/test';
-import { PROJECTS } from '../src/data/projects';
 import { CASE_STUDIES } from '../src/data/caseStudies';
 
 // Deliberately shallow: these run against the production build via
@@ -24,7 +23,6 @@ const routes: { path: string; heading: string }[] = [
   { path: '/about', heading: 'A little bit about me' },
   { path: '/work', heading: 'Work' },
   ...CASE_STUDIES.map(study => ({ path: `/work/${study.slug}`, heading: study.title })),
-  { path: '/projects', heading: 'Projects' },
   { path: '/resume', heading: 'Resume' },
 ];
 
@@ -48,15 +46,72 @@ for (const { path, heading } of routes) {
   });
 }
 
-test('nav from Home to Projects shows project cards', async ({ page }) => {
-  await page.goto('/');
-  // exact: Playwright matches names as substrings by default, and the home
-  // page's "See my projects" button would also match.
-  await page.getByRole('link', { name: 'Projects', exact: true }).click();
-  await expect(page.getByRole('heading', { level: 1, name: 'Projects' })).toBeVisible();
-  for (const project of PROJECTS) {
-    await expect(page.getByRole('heading', { name: project.name })).toBeVisible();
+// /projects was merged into /work: case studies first, then a short side
+// projects section. The old URL 301s at CloudFront in prod; in-app it falls
+// through to the catch-all not-found page.
+test('/work shows case studies, then side projects', async ({ page }) => {
+  await page.goto('/work');
+  const caseStudies = page.getByRole('region', { name: 'Case studies' });
+  await expect(caseStudies.getByRole('heading', { level: 3 })).toHaveText(
+    CASE_STUDIES.filter(study => study.kind !== 'side').map(study => study.title)
+  );
+  const sideProjects = page.getByRole('region', { name: 'Side projects' });
+  const sideStudies = CASE_STUDIES.filter(study => study.kind === 'side');
+  await expect(sideProjects.getByRole('link')).toHaveCount(sideStudies.length + 1);
+  for (const study of sideStudies) {
+    await expect(sideProjects.getByRole('link', { name: study.title })).toHaveAttribute(
+      'href',
+      `/work/${study.slug}`
+    );
   }
+  await expect(sideProjects.getByRole('link', { name: 'Personal Site (This!)' })).toHaveAttribute(
+    'href',
+    'https://github.com/placy2/personal-website'
+  );
+  await expect(page.getByText(/telegram|opioid/i)).toHaveCount(0);
+});
+
+// Figure images live in public/ and are referenced by path, so nothing in the
+// build would notice a missing or misnamed file; check the built site serves them.
+for (const study of CASE_STUDIES.filter(entry => entry.figures?.length)) {
+  test(`/work/${study.slug} serves every figure image`, async ({ page, request }) => {
+    await page.goto(`/work/${study.slug}`);
+    for (const figure of study.figures!) {
+      await expect(page.getByText(figure.caption)).toBeVisible();
+      for (const image of figure.images) {
+        await expect(page.getByAltText(image.alt)).toHaveAttribute('src', image.src);
+        const response = await request.get(image.src);
+        expect(response.status(), image.src).toBe(200);
+      }
+    }
+  });
+}
+
+test('the nav no longer offers a Projects page', async ({ page }) => {
+  await page.goto('/');
+  const nav = page.getByRole('navigation', { name: 'Primary' });
+  await expect(nav.getByRole('link', { name: 'Work', exact: true })).toBeVisible();
+  await expect(nav.getByRole('link', { name: 'Projects' })).toHaveCount(0);
+});
+
+test('/projects is gone from the build and the sitemap', async ({ page, request }) => {
+  const errors = collectConsoleErrors(page);
+  await page.goto('/projects');
+  await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible();
+  expect(errors).toEqual([]);
+
+  const sitemap = await (await request.get('/sitemap.xml')).text();
+  expect(sitemap).toContain('https://parkerlacy.com/work</loc>');
+  expect(sitemap).not.toContain('/projects');
+});
+
+test('/about shows the career timeline in order', async ({ page }) => {
+  await page.goto('/about');
+  const items = page.getByRole('region', { name: 'Timeline' }).getByRole('listitem');
+  await expect(items).toHaveCount(3);
+  await expect(items.nth(0)).toContainText('Trinity University');
+  await expect(items.nth(1)).toContainText('Credera');
+  await expect(items.nth(2)).toContainText('Triumph');
 });
 
 test('nav from Home to a case study via the Work page', async ({ page }) => {

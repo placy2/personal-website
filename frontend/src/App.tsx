@@ -6,7 +6,6 @@ import Home from './pages/Home';
 import About from './pages/About';
 import Work from './pages/Work';
 import CaseStudy from './pages/CaseStudy';
-import Projects from './pages/Projects';
 import Resume from './pages/Resume';
 import NotFound from './pages/NotFound';
 import Footer from './components/Footer';
@@ -33,7 +32,6 @@ export const AppRoutes: React.FC = () => {
             <Route path="/about" element={<About />} />
             <Route path="/work" element={<Work />} />
             <Route path="/work/:slug" element={<CaseStudy />} />
-            <Route path="/projects" element={<Projects />} />
             <Route path="/resume" element={<Resume />} />
             {/* Client-side only: not in ROUTE_META, so never prerendered or in
                 the sitemap. Unknown paths get a real 404 from S3/CloudFront. */}

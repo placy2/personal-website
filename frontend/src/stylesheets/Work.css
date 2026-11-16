@@ -55,3 +55,63 @@
 .case-study section h2 {
   margin-bottom: var(--space-2);
 }
+
+.case-study-figure {
+  margin: var(--space-4) 0 var(--space-5);
+}
+
+.case-study-figure-images {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.case-study-figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--radius);
+}
+
+/* Two phone screenshots: side by side even on a phone, where stacking them
+   would mean two full screens of scrolling. */
+.case-study-figure-pair img {
+  width: calc(50% - var(--space-3) / 2);
+  max-width: 18rem;
+}
+
+.case-study-figure figcaption {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--theme-muted);
+  text-align: center;
+}
+
+/* Side projects: deliberately lighter than the case study cards so the
+   case studies stay the focus of the page. */
+.side-project-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.side-project-list li {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--theme-border);
+}
+
+.side-project-list li + li {
+  margin-top: var(--space-4);
+}
+
+.side-project-list h3 {
+  font-size: var(--text-base);
+  margin: 0 0 var(--space-1);
+}
+
+.side-project-list p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--theme-muted);
+}
