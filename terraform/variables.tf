@@ -16,12 +16,6 @@ variable "bucket_name" {
   type        = string
 }
 
-variable "allow_public_read" {
-  description = "Cutover phase 1 only: keep the legacy public-read bucket policy and S3 website endpoint alongside the CloudFront OAC grant"
-  type        = bool
-  default     = false
-}
-
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string

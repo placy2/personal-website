@@ -13,11 +13,6 @@ output "s3_direct_url" {
   value       = "https://${aws_s3_bucket.bucket.bucket_regional_domain_name}"
 }
 
-output "origin_private" {
-  description = "True once the bucket is locked to CloudFront OAC (cutover phase 2 done)"
-  value       = !var.allow_public_read
-}
-
 output "s3_bucket_name" {
   description = "S3 bucket name"
   value       = aws_s3_bucket.bucket.bucket

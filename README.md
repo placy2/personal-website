@@ -104,9 +104,7 @@ terraform plan -lock-timeout=5m -var-file="env/<dev|prod>.tfvars"
 
 Helper scripts (`scripts/deploy.sh`, `upload-site.sh`, `teardown.sh`, `smoke-test.sh`) wrap these commands; see [`scripts/README.md`](scripts/README.md) for usage and troubleshooting. A deploy is two steps. Terraform manages the infrastructure only. Then `scripts/upload-site.sh` uploads the built `frontend/dist/**` with `aws s3` (explicit Content-Type and Cache-Control per file type) and invalidates CloudFront. Build the frontend first.
 
-After each deploy, `scripts/smoke-test.sh <url> [s3-direct-url]` checks the live site: HTTP 200, expected content, valid HTML, each prerendered route, real 404s, Cache-Control on HTML and assets, the `/projects` -> `/work` 301, and (once the origin is locked down) that the bucket refuses direct reads.
-
-The move from the public S3 website endpoint to a private OAC origin is applied in two phases. See [`docs/private-origin-cutover.md`](docs/private-origin-cutover.md).
+After each deploy, `scripts/smoke-test.sh <url> [s3-direct-url]` checks the live site: HTTP 200, expected content, valid HTML, each prerendered route, real 404s, Cache-Control on HTML and assets, the `/projects` -> `/work` 301, and that the bucket refuses direct reads.
 
 ## License
 

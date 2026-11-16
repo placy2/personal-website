@@ -384,12 +384,7 @@ jobs:
             echo "bucket=$(terraform output -raw s3_bucket_name)"
             echo "distribution_id=$(terraform output -raw cloudfront_distribution_id)"
             echo "cloudfront_url=$(terraform output -raw cloudfront_url)"
-            # Only assert the bucket is private once cutover phase 2 is applied.
-            if [ "$(terraform output -raw origin_private)" = "true" ]; then
-              echo "s3_direct_url=$(terraform output -raw s3_direct_url)"
-            else
-              echo "s3_direct_url="
-            fi
+            echo "s3_direct_url=$(terraform output -raw s3_direct_url)"
           } >> "$GITHUB_OUTPUT"
 
       # Terraform owns the infra; content goes up here (new assets first, HTML
@@ -503,12 +498,7 @@ jobs:
             echo "bucket=$(terraform output -raw s3_bucket_name)"
             echo "distribution_id=$(terraform output -raw cloudfront_distribution_id)"
             echo "cloudfront_url=$(terraform output -raw cloudfront_url)"
-            # Only assert the bucket is private once cutover phase 2 is applied.
-            if [ "$(terraform output -raw origin_private)" = "true" ]; then
-              echo "s3_direct_url=$(terraform output -raw s3_direct_url)"
-            else
-              echo "s3_direct_url="
-            fi
+            echo "s3_direct_url=$(terraform output -raw s3_direct_url)"
           } >> "$GITHUB_OUTPUT"
 
       # Terraform owns the infra; content goes up here (new assets first, HTML
