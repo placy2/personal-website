@@ -223,6 +223,11 @@ devtools open, confirm zero CSP violations in the console across all four routes
 
 ## 5. S3 → OAC private origin (issue finding #7)
 
+> **Status:** deployed 11/15 in 2 phases.
+> A `custom_error_response` (404 ->
+> `/index.html`, status kept at 404) replaces the website endpoint's error document. Dev now gets
+> its own distribution (no custom domain), because the website endpoint it used goes away.
+
 **Risk: high — do this last, and only after item 3 is deployed and verified.** The
 current setup depends on the S3 *website* endpoint's error-document behavior, which item 3
 replaces with a CloudFront Function. Moving to a REST-API S3 origin + Origin Access

@@ -31,7 +31,7 @@ Optional: `cp .env.example .env.local` to override `VITE_APP_VERSION`.
 
 - **Frontend**: React 19 + TypeScript + Vite, prerendered to static HTML per route (`frontend/scripts/prerender.mjs`)
 - **Styling**: Plain CSS with custom properties
-- **Infrastructure**: AWS S3 + CloudFront + Route 53 + ACM (prod); S3 only (dev)
+- **Infrastructure**: private S3 bucket behind CloudFront (Origin Access Control) in both environments; prod adds Route 53 + ACM for the custom domain
 - **IaC**: Terraform, one config parameterized per environment (`terraform/env/`)
 - **CI/CD**: GitHub Actions: PR validation, Lighthouse CI, Terraform plan, deploy
 - **Testing**: Vitest + React Testing Library (unit and a11y), Playwright (e2e against the production build), Lighthouse CI (perf/a11y/best-practices/SEO)
@@ -84,9 +84,9 @@ See [`frontend/README.md`](frontend/README.md) for structure and styling convent
 
 | | Dev | Prod |
 |---|---|---|
-| Stack | S3 website only | S3 + CloudFront + Route 53 |
+| Stack | S3 + CloudFront | S3 + CloudFront + Route 53 + ACM |
 | Bucket | `parkerlacy-dev-hosting` | `parkerlacy-website-hosting` |
-| Domain | S3 website endpoint | `parkerlacy.com` |
+| Domain | `*.cloudfront.net` (`terraform output cloudfront_url`) | `parkerlacy.com` |
 
 Dev is torn down regularly to save cost, so it is often absent.
 
@@ -102,9 +102,11 @@ terraform init -reconfigure -backend-config=env/<dev|prod>.s3.tfbackend
 terraform plan -lock-timeout=5m -var-file="env/<dev|prod>.tfvars"
 ```
 
-Helper scripts (`scripts/deploy.sh`, `teardown.sh`, `smoke-test.sh`) wrap these commands; see [`scripts/README.md`](scripts/README.md) for usage and troubleshooting. The site is deployed by Terraform uploading `frontend/dist/**`, so the frontend must be built first.
+Helper scripts (`scripts/deploy.sh`, `upload-site.sh`, `teardown.sh`, `smoke-test.sh`) wrap these commands; see [`scripts/README.md`](scripts/README.md) for usage and troubleshooting. A deploy is two steps. Terraform manages the infrastructure only. Then `scripts/upload-site.sh` uploads the built `frontend/dist/**` with `aws s3` (explicit Content-Type and Cache-Control per file type) and invalidates CloudFront. Build the frontend first.
 
-After each deploy, `scripts/smoke-test.sh <url>` checks the live site (HTTP 200, expected content, valid HTML, React root).
+After each deploy, `scripts/smoke-test.sh <url> [s3-direct-url]` checks the live site: HTTP 200, expected content, valid HTML, each prerendered route, real 404s, Cache-Control on HTML and assets, the `/projects` -> `/work` 301, and (once the origin is locked down) that the bucket refuses direct reads.
+
+The move from the public S3 website endpoint to a private OAC origin is applied in two phases. See [`docs/private-origin-cutover.md`](docs/private-origin-cutover.md).
 
 ## License
 

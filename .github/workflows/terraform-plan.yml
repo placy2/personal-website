@@ -54,8 +54,9 @@ jobs:
         include:
           - label: Dev
             env: dev
-          # Dev is S3-only, so CloudFront, Route 53 and ACM changes only show
-          # up in a prod plan. Read-only: this workflow never applies.
+          # Dev has its own distribution but no custom domain, so Route 53
+          # and ACM changes only show up in a prod plan. Read-only: this
+          # workflow never applies.
           - label: Prod
             env: prod
     # Not for deploy gating — this job only plans, for both matrix entries. It
@@ -80,14 +81,6 @@ jobs:
 
       - name: Test CloudFront Function
         run: node --test terraform/functions/*.test.mjs
-
-      # terraform/main.tf enumerates ../frontend/dist via fileset(), so the
-      # frontend must be built for the plan to reflect the real S3 object set.
-      - name: Build frontend
-        working-directory: ./frontend
-        run: |
-          npm ci
-          npm run build
 
       - name: Configure OIDC AWS Credentials
         uses: aws-actions/configure-aws-credentials@v6
@@ -128,9 +121,10 @@ jobs:
             grep -E '^(Plan:|No changes\.|Error:)' plan.txt | head -1 \
               || echo "⚠️ Plan did not produce a summary line (see full output below)."
             echo
-            # Every build stamps its commit SHA into the HTML, so S3 object
-            # churn shows up in nearly every plan. List everything else on its
-            # own so infra changes aren't buried under it.
+            # Site objects are no longer managed by Terraform (scripts/
+            # upload-site.sh uploads them). The one plan that forgets them via
+            # the `removed` block lists every aws_s3_object.file; keep them
+            # out of the infra list so real changes aren't buried.
             echo "Infra changes (excluding \`aws_s3_object.file\`):"
             echo
             echo '```'

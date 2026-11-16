@@ -3,8 +3,11 @@
 # smoke-test.sh - Basic smoke tests for deployed website
 # Tests that the deployed site returns a 200 status and contains expected content
 #
-# Usage: ./smoke-test.sh <url>
-# Example: ./smoke-test.sh http://parkerlacy-dev-hosting.s3-website-us-east-1.amazonaws.com
+# Usage: ./smoke-test.sh <url> [s3-direct-url]
+#   s3-direct-url  the bucket's REST URL (terraform output -raw s3_direct_url).
+#                  When given, the bucket must refuse direct reads (403).
+#                  Omit it until private-origin cutover phase 2 is applied.
+# Example: ./smoke-test.sh https://d1234abcd.cloudfront.net https://parkerlacy-dev-hosting.s3.us-east-1.amazonaws.com
 
 set -e
 
@@ -15,11 +18,12 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 URL=$1
+S3_DIRECT_URL=${2:-}
 
 if [ -z "$URL" ]; then
   echo -e "${RED}Error: URL argument required${NC}"
-  echo "Usage: $0 <url>"
-  echo "Example: $0 http://parkerlacy-dev-hosting.s3-website-us-east-1.amazonaws.com"
+  echo "Usage: $0 <url> [s3-direct-url]"
+  echo "Example: $0 https://d1234abcd.cloudfront.net"
   exit 1
 fi
 
@@ -147,11 +151,12 @@ else
   exit 1
 fi
 
-# Test 9: every route in the sitemap serves its own prerendered page. In prod a
-# CloudFront Function rewrites /<path> to /<path>/index.html; dev's S3 website
-# endpoint redirects /<path> to /<path>/ and serves the index document (hence
-# -L). If either breaks, routes silently fall back to the home page's HTML and
-# link previews for /work/<slug> show the wrong title and description.
+# Test 9: every route in the sitemap serves its own prerendered page, with a
+# 200 and no redirect. A CloudFront Function rewrites /<path> to
+# /<path>/index.html (the S3 REST origin has no index document). If that
+# breaks, routes 404 or fall back to the home page's HTML, and link previews
+# for /work/<slug> show the wrong title and description. No -L: a sitemap must
+# not list a URL that redirects (e.g. /projects, which 301s to /work).
 echo "Test 9: Checking each sitemap route serves its own page..."
 SITEMAP_LOCS=$(curl -s "$URL/sitemap.xml" | grep -oE '<loc>[^<]+</loc>' | sed -E 's#</?loc>##g')
 
@@ -166,7 +171,7 @@ for LOC in $SITEMAP_LOCS; do
   [ "$LOC" = "${LOC#*://*/}" ] && ROUTE_PATH="/"
   [ "$ROUTE_PATH" = "/" ] && continue
 
-  ROUTE_RESPONSE=$(curl -sL -w "\n%{http_code}" "${URL%/}$ROUTE_PATH")
+  ROUTE_RESPONSE=$(curl -s -w "\n%{http_code}" "${URL%/}$ROUTE_PATH")
   ROUTE_STATUS=$(echo "$ROUTE_RESPONSE" | tail -n 1)
   ROUTE_BODY=$(echo "$ROUTE_RESPONSE" | sed '$d' | tr '\n' ' ')
 
@@ -184,17 +189,90 @@ done
 
 # Test 10: unknown paths return a real 404, not the home page with a 200 (GH
 # #169). A 404->200 fallback tells crawlers every mistyped URL is a duplicate
-# of the home page. No -L: dev's S3 website endpoint 404s directly, and prod's
-# CloudFront passes S3's 404 through.
+# of the home page. No -L: CloudFront passes S3's 404 through, with index.html
+# as the body (custom_error_response) so the app can render "Page not found".
+# A 403 here means the bucket policy lost s3:ListBucket for CloudFront.
 echo "Test 10: Checking an unknown path returns 404..."
 BAD_PATH="/smoke-test-definitely-not-a-real-page-$RANDOM"
-BAD_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${URL%/}$BAD_PATH")
+BAD_HEADERS=$(curl -s -D - -o /dev/null "${URL%/}$BAD_PATH")
+BAD_STATUS=$(echo "$BAD_HEADERS" | head -n 1 | grep -oE '[0-9]{3}')
+BAD_CONTENT_TYPE=$(echo "$BAD_HEADERS" | grep -i "^content-type:" | tr -d '\r')
 
 if [ "$BAD_STATUS" = "404" ]; then
   echo -e "${GREEN}✓ $BAD_PATH: 404${NC}"
 else
-  echo -e "${RED}✗ $BAD_PATH returned $BAD_STATUS (expected 404 — is a 404->200 fallback back?)${NC}"
+  echo -e "${RED}✗ $BAD_PATH returned $BAD_STATUS (expected 404 — is a 404->200 fallback back, or did CloudFront lose s3:ListBucket?)${NC}"
   exit 1
+fi
+
+if echo "$BAD_CONTENT_TYPE" | grep -qi "text/html"; then
+  echo -e "${GREEN}✓ 404 body is the HTML app shell ($BAD_CONTENT_TYPE)${NC}"
+else
+  echo -e "${RED}✗ 404 body is '$BAD_CONTENT_TYPE', not HTML (custom_error_response missing?)${NC}"
+  exit 1
+fi
+
+# Test 11: Cache-Control on an HTML page and on a hashed asset. These are set
+# per object by scripts/upload-site.sh; a wrong value either serves stale pages
+# (HTML) or throws away long-lived caching (assets).
+echo "Test 11: Checking Cache-Control headers..."
+header_value() { grep -i "^$1:" | head -n 1 | cut -d: -f2- | sed -e 's/^[[:space:]]*//' | tr -d '\r'; }
+
+HOME_HEADERS=$(curl -s -D - -o /dev/null "$URL")
+HOME_CACHE=$(echo "$HOME_HEADERS" | header_value cache-control)
+if [ "$HOME_CACHE" = "no-cache" ]; then
+  echo -e "${GREEN}✓ HTML Cache-Control: $HOME_CACHE${NC}"
+else
+  echo -e "${RED}✗ HTML Cache-Control is '$HOME_CACHE' (expected 'no-cache')${NC}"
+  exit 1
+fi
+
+ASSET_PATH=$(echo "$CONTENT" | grep -oE '/assets/[A-Za-z0-9._-]+\.(js|css)' | head -n 1)
+if [ -z "$ASSET_PATH" ]; then
+  echo -e "${RED}✗ Home page references no /assets/*.js or *.css file${NC}"
+  exit 1
+fi
+ASSET_HEADERS=$(curl -s -D - -o /dev/null "${URL%/}$ASSET_PATH")
+ASSET_STATUS=$(echo "$ASSET_HEADERS" | head -n 1 | grep -oE '[0-9]{3}')
+ASSET_CACHE=$(echo "$ASSET_HEADERS" | header_value cache-control)
+if [ "$ASSET_STATUS" = "200" ] && [ "$ASSET_CACHE" = "public, max-age=31536000, immutable" ]; then
+  echo -e "${GREEN}✓ $ASSET_PATH: 200, Cache-Control: $ASSET_CACHE${NC}"
+else
+  echo -e "${RED}✗ $ASSET_PATH returned '$ASSET_STATUS', Cache-Control '$ASSET_CACHE' (expected 200, 'public, max-age=31536000, immutable')${NC}"
+  exit 1
+fi
+
+# Test 12: the retired /projects route 301s to /work (CloudFront Function).
+echo "Test 12: Checking /projects redirects to /work..."
+for OLD_PATH in /projects /projects/; do
+  REDIRECT_HEADERS=$(curl -s -D - -o /dev/null "${URL%/}$OLD_PATH")
+  REDIRECT_STATUS=$(echo "$REDIRECT_HEADERS" | head -n 1 | grep -oE '[0-9]{3}')
+  REDIRECT_LOCATION=$(echo "$REDIRECT_HEADERS" | header_value location)
+  case "$REDIRECT_LOCATION" in
+    /work | */work) LOCATION_OK=true ;;
+    *) LOCATION_OK=false ;;
+  esac
+  if [ "$REDIRECT_STATUS" = "301" ] && [ "$LOCATION_OK" = true ]; then
+    echo -e "${GREEN}✓ $OLD_PATH: 301 -> $REDIRECT_LOCATION${NC}"
+  else
+    echo -e "${RED}✗ $OLD_PATH returned '$REDIRECT_STATUS' -> '$REDIRECT_LOCATION' (expected 301 -> /work)${NC}"
+    exit 1
+  fi
+done
+
+# Test 13: the bucket itself is private. Only run once the origin is locked
+# down (cutover phase 2); before that the legacy public-read grant is expected.
+if [ -n "$S3_DIRECT_URL" ]; then
+  echo "Test 13: Checking the bucket refuses direct reads..."
+  DIRECT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${S3_DIRECT_URL%/}/index.html")
+  if [ "$DIRECT_STATUS" = "403" ]; then
+    echo -e "${GREEN}✓ ${S3_DIRECT_URL%/}/index.html: 403${NC}"
+  else
+    echo -e "${RED}✗ ${S3_DIRECT_URL%/}/index.html returned $DIRECT_STATUS (expected 403 — bucket is publicly readable?)${NC}"
+    exit 1
+  fi
+else
+  echo -e "${YELLOW}Test 13: skipped (no S3 direct URL given; origin not locked down yet)${NC}"
 fi
 
 echo "----------------------------------------"

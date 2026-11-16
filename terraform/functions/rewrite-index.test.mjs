@@ -39,15 +39,45 @@ test('does not redirect the apex, the CloudFront domain, or a missing Host', () 
   assert.equal(handle('/about').uri, '/about/index.html');
 });
 
+// The S3 REST origin has no index document, so every page (including /) is
+// served only because of this rewrite.
 test('appends index.html to directory-style paths', () => {
   assert.equal(rewrite('/'), '/index.html');
   assert.equal(rewrite('/about/'), '/about/index.html');
+  assert.equal(rewrite('/work/'), '/work/index.html');
+  assert.equal(rewrite('/work/some-slug/'), '/work/some-slug/index.html');
 });
 
 test('rewrites extensionless routes to their prerendered page', () => {
-  for (const route of ['/about', '/projects', '/resume']) {
+  for (const route of ['/about', '/work', '/work/some-slug', '/resume']) {
     assert.equal(rewrite(route), `${route}/index.html`);
   }
+});
+
+test('301s /projects and /projects/ to /work with a relative Location', () => {
+  for (const uri of ['/projects', '/projects/']) {
+    for (const host of ['parkerlacy.com', 'd1234abcd.cloudfront.net', undefined]) {
+      const response = handle(uri, host);
+      assert.equal(response.statusCode, 301);
+      assert.equal(response.statusDescription, 'Moved Permanently');
+      assert.equal(response.headers.location.value, '/work');
+      assert.equal(response.headers['cache-control'].value, 'max-age=86400');
+    }
+  }
+});
+
+test('www + /projects redirects straight to the apex /work in one hop', () => {
+  for (const uri of ['/projects', '/projects/']) {
+    const response = handle(uri, 'www.parkerlacy.com');
+    assert.equal(response.statusCode, 301);
+    assert.equal(response.headers.location.value, 'https://parkerlacy.com/work');
+  }
+});
+
+test('does not redirect other paths under or near /projects', () => {
+  assert.equal(rewrite('/projects/old-slug'), '/projects/old-slug/index.html');
+  assert.equal(rewrite('/projectsx'), '/projectsx/index.html');
+  assert.equal(rewrite('/projects/index.html'), '/projects/index.html');
 });
 
 test('leaves real files alone', () => {
