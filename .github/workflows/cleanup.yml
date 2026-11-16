@@ -25,7 +25,7 @@ on:
 
 env:
   STALE_AFTER_DAYS: 30
-  TERRAFORM_VERSION: "1.17.1"
+  TERRAFORM_VERSION: "1.17.2"
 
 jobs:
   check-last-deploy:
