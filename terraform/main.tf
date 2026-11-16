@@ -1,8 +1,9 @@
 # https://pfertyk.me/2023/01/creating-a-static-website-with-terraform-and-aws/
 
 resource "aws_s3_bucket" "bucket" {
-  bucket = var.bucket_name
-  tags   = local.common_tags
+  bucket        = var.bucket_name
+  force_destroy = var.environment != "prod"
+  tags          = local.common_tags
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_encryption" {
@@ -15,13 +16,17 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_encryption
   }
 }
 
+# depends_on the distribution so that, on any apply, the bucket is locked only
+# after the distribution update (origin switch + OAC signing) has finished. The
+# provider waits for the distribution to reach Deployed before returning.
 resource "aws_s3_bucket_public_access_block" "bucket_access_block" {
-  bucket = aws_s3_bucket.bucket.id
+  depends_on = [aws_cloudfront_distribution.distribution]
+  bucket     = aws_s3_bucket.bucket.id
 
   block_public_acls       = true
-  block_public_policy     = false
+  block_public_policy     = !var.allow_public_read
   ignore_public_acls      = true
-  restrict_public_buckets = false
+  restrict_public_buckets = !var.allow_public_read
 }
 
 resource "aws_s3_bucket_policy" "bucket_policy" {
@@ -29,34 +34,60 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
   bucket     = aws_s3_bucket.bucket.id
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = [
-      {
-        "Sid" : "PublicReadGetObject",
-        "Effect" : "Allow",
-        "Principal" : "*",
-        "Action" : "s3:GetObject",
-        "Resource" : "arn:aws:s3:::${aws_s3_bucket.bucket.id}/*"
-      }
-    ]
+    Statement = concat(
+      [
+        {
+          Sid       = "CloudFrontReadObjects"
+          Effect    = "Allow"
+          Principal = { Service = "cloudfront.amazonaws.com" }
+          Action    = "s3:GetObject"
+          Resource  = "${aws_s3_bucket.bucket.arn}/*"
+          Condition = {
+            StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.distribution.arn }
+          }
+        },
+        {
+          Sid       = "CloudFrontListBucket"
+          Effect    = "Allow"
+          Principal = { Service = "cloudfront.amazonaws.com" }
+          Action    = "s3:ListBucket"
+          Resource  = aws_s3_bucket.bucket.arn
+          Condition = {
+            StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.distribution.arn }
+          }
+        },
+      ],
+      # Cutover phase 1 only: the old public-read grant, so edges still on the
+      # website endpoint keep working while the distribution update propagates.
+      var.allow_public_read ? [
+        {
+          Sid       = "PublicReadGetObject"
+          Effect    = "Allow"
+          Principal = "*"
+          Action    = "s3:GetObject"
+          Resource  = "${aws_s3_bucket.bucket.arn}/*"
+        },
+      ] : [],
+    )
   })
 }
 
-resource "aws_s3_object" "file" {
-  for_each     = fileset(path.module, "../frontend/dist/**/*.{html,css,js,txt,xml,jpeg,jpg,png,webp,svg,gif,ico}")
-  bucket       = aws_s3_bucket.bucket.id
-  key          = replace(each.value, "/^../frontend/dist//", "")
-  source       = each.value
-  content_type = lookup(local.content_types, regex("\\.[^.]+$", each.value), "application/octet-stream")
-  source_hash  = filemd5(each.value)
+# Site content (frontend/dist) is uploaded by scripts/upload-site.sh after
+# apply. This forgets the objects Terraform used to manage without deleting
+# them from the bucket.
+removed {
+  from = aws_s3_object.file
 
-  cache_control = endswith(each.value, ".html") ? "no-cache" : (
-    strcontains(each.value, "/assets/") ? "public, max-age=31536000, immutable"
-    : "public, max-age=86400"
-  )
-  tags = local.common_tags
+  lifecycle {
+    destroy = false
+  }
 }
 
+# Legacy public website endpoint. Kept only while allow_public_read is on, so
+# cutover phase 1 can be rolled back by pointing the origin back at it.
+# Nothing serves from it once CloudFront reads the REST endpoint.
 resource "aws_s3_bucket_website_configuration" "hosting" {
+  count  = var.allow_public_read ? 1 : 0
   bucket = aws_s3_bucket.bucket.id
 
   index_document {
@@ -68,6 +99,11 @@ resource "aws_s3_bucket_website_configuration" "hosting" {
   }
 }
 
+moved {
+  from = aws_s3_bucket_website_configuration.hosting
+  to   = aws_s3_bucket_website_configuration.hosting[0]
+}
+
 # Replaces the AWS managed SecurityHeadersPolicy. Keeps its nosniff,
 # X-Frame-Options and Referrer-Policy values, adds a CSP and Permissions-Policy,
 # adds includeSubDomains to HSTS, and drops the deprecated X-XSS-Protection.
@@ -76,10 +112,10 @@ resource "aws_s3_bucket_website_configuration" "hosting" {
 # scripts and stylesheets, and the only inline <script> blocks are
 # type="application/ld+json" (data, not executed). Adding a third-party script,
 # font, image or analytics beacon means updating this policy, or the browser
-# will block it in prod only (dev is S3-only and never gets these headers).
+# will block it. Dev's distribution uses this same policy, so a violation shows
+# up there first.
 # HSTS preload is deliberately off: preload-list removal is slow and manual.
 resource "aws_cloudfront_response_headers_policy" "security_headers" {
-  count   = var.enable_cloudfront ? 1 : 0
   name    = "${var.environment}-personal-website-security-headers"
   comment = "Security headers incl. CSP and Permissions-Policy for ${var.domain_name}"
 
@@ -129,12 +165,12 @@ resource "aws_cloudfront_response_headers_policy" "security_headers" {
   }
 }
 
-# Viewer-request function: 301s www.<domain> to the apex, and rewrites
-# /about -> /about/index.html so direct loads get each route's own prerendered
-# page instead of the home page. See functions/rewrite-index.js. (The resource
-# name predates the redirect; renaming it would replace the function.)
+# Viewer-request function: 301s www.<domain> to the apex and retired routes
+# (/projects -> /work) to their replacement, and rewrites /about ->
+# /about/index.html. The S3 REST origin has no index document, so that rewrite
+# is what serves every page, including /. See functions/rewrite-index.js. (The
+# resource name predates the redirects; renaming it would replace the function.)
 resource "aws_cloudfront_function" "rewrite_index" {
-  count   = var.enable_cloudfront ? 1 : 0
   name    = "${var.environment}-personal-website-rewrite-index"
   runtime = "cloudfront-js-2.0"
   comment = "Map extensionless routes to their prerendered index.html"
@@ -142,42 +178,52 @@ resource "aws_cloudfront_function" "rewrite_index" {
   code    = file("${path.module}/functions/rewrite-index.js")
 }
 
-# CloudFront distribution - optional for cost savings
-resource "aws_cloudfront_distribution" "distribution" {
-  count = var.enable_cloudfront ? 1 : 0
+# Signs CloudFront's origin requests (SigV4) so the bucket policy can admit
+# this distribution and nobody else.
+resource "aws_cloudfront_origin_access_control" "site" {
+  name                              = "${var.environment}-personal-website-s3"
+  description                       = "CloudFront access to the ${var.bucket_name} bucket"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
 
+# Both environments get a distribution. Dev has no custom domain and answers on
+# its *.cloudfront.net name with the default certificate.
+resource "aws_cloudfront_distribution" "distribution" {
   enabled         = true
   is_ipv6_enabled = true
   comment         = "${var.environment} - ${var.domain_name}"
 
-  # No custom_error_response: unknown paths keep S3's real 404 status. The
-  # website endpoint's error_document (index.html) is the body, and the app's
-  # catch-all route renders "Page not found" client-side. A 404->200 remap here
-  # would tell crawlers every typo'd URL is a duplicate of the home page.
+  # Unknown paths keep S3's real 404 status (the bucket policy grants
+  # ListBucket, so S3 says 404 rather than 403). The REST endpoint's 404 body
+  # is an XML error, so swap in index.html as the body and keep the 404.
+  # main.tsx sees the data-prerendered-route mismatch and the app's catch-all
+  # route renders "Page not found" client-side. Never remap to 200: that tells
+  # crawlers every typo'd URL is a duplicate of the home page. 403 is left
+  # unmapped so an origin-access misconfiguration stays visible.
+  custom_error_response {
+    error_code            = 404
+    response_code         = 404
+    response_page_path    = "/index.html"
+    error_caching_min_ttl = 10
+  }
 
   origin {
-    domain_name = aws_s3_bucket_website_configuration.hosting.website_endpoint
-    origin_id   = aws_s3_bucket.bucket.bucket_regional_domain_name
-
-    custom_origin_config {
-      http_port                = 80
-      https_port               = 443
-      origin_keepalive_timeout = 5
-      origin_protocol_policy   = "http-only"
-      origin_read_timeout      = 30
-      origin_ssl_protocols = [
-        "TLSv1.2",
-      ]
-    }
+    domain_name              = aws_s3_bucket.bucket.bucket_regional_domain_name
+    origin_id                = aws_s3_bucket.bucket.bucket_regional_domain_name
+    origin_access_control_id = aws_cloudfront_origin_access_control.site.id
   }
 
   # www is only ever answered with a 301 to the apex (functions/rewrite-index.js).
-  aliases = [var.domain_name, "www.${var.domain_name}"]
+  aliases = local.custom_domain ? [var.domain_name, "www.${var.domain_name}"] : []
 
   viewer_certificate {
-    acm_certificate_arn      = aws_acm_certificate_validation.cert[0].certificate_arn
-    ssl_support_method       = "sni-only"
-    minimum_protocol_version = "TLSv1.2_2021"
+    acm_certificate_arn            = one(aws_acm_certificate_validation.cert[*].certificate_arn)
+    cloudfront_default_certificate = !local.custom_domain
+    ssl_support_method             = local.custom_domain ? "sni-only" : null
+    # CloudFront pins the default *.cloudfront.net certificate to TLSv1.
+    minimum_protocol_version = local.custom_domain ? "TLSv1.2_2021" : "TLSv1"
   }
 
   restrictions {
@@ -194,17 +240,33 @@ resource "aws_cloudfront_distribution" "distribution" {
     allowed_methods            = ["GET", "HEAD"]
     cached_methods             = ["GET", "HEAD"]
     target_origin_id           = aws_s3_bucket.bucket.bucket_regional_domain_name
-    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers[0].id
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers.id
 
     function_association {
       event_type   = "viewer-request"
-      function_arn = aws_cloudfront_function.rewrite_index[0].arn
+      function_arn = aws_cloudfront_function.rewrite_index.arn
     }
   }
 
   price_class = "PriceClass_100"
 
   tags = local.common_tags
+}
+
+# These were count-gated on the removed enable_cloudfront variable.
+moved {
+  from = aws_cloudfront_distribution.distribution[0]
+  to   = aws_cloudfront_distribution.distribution
+}
+
+moved {
+  from = aws_cloudfront_function.rewrite_index[0]
+  to   = aws_cloudfront_function.rewrite_index
+}
+
+moved {
+  from = aws_cloudfront_response_headers_policy.security_headers[0]
+  to   = aws_cloudfront_response_headers_policy.security_headers
 }
 
 # Route 53 hosted zone - only create if it's production environment
@@ -222,7 +284,7 @@ resource "aws_route53_zone" "zone" {
 # Expected to fail validation/hang first time, rerun once registrar steps are complete. 
 # Can alternately target apply the zone first, and wait to apply the rest until dig NS parkerlacy.com works
 resource "aws_acm_certificate" "cert" {
-  count             = var.enable_cloudfront ? 1 : 0
+  count             = local.custom_domain ? 1 : 0
   domain_name       = var.domain_name
   validation_method = "DNS"
   # Changing SANs replaces the cert. create_before_destroy below makes that
@@ -238,7 +300,7 @@ resource "aws_acm_certificate" "cert" {
 }
 
 resource "aws_route53_record" "cert_validation" {
-  for_each = var.enable_cloudfront ? {
+  for_each = local.custom_domain ? {
     for dvo in aws_acm_certificate.cert[0].domain_validation_options : dvo.domain_name => {
       name   = dvo.resource_record_name
       record = dvo.resource_record_value
@@ -255,28 +317,28 @@ resource "aws_route53_record" "cert_validation" {
 }
 
 resource "aws_route53_record" "site" {
-  for_each = var.enable_cloudfront ? toset(["A", "AAAA"]) : toset([])
+  for_each = local.custom_domain ? toset(["A", "AAAA"]) : toset([])
   zone_id  = aws_route53_zone.zone[0].zone_id
   name     = var.domain_name
   type     = each.key
 
   alias {
-    name                   = aws_cloudfront_distribution.distribution[0].domain_name
-    zone_id                = aws_cloudfront_distribution.distribution[0].hosted_zone_id
+    name                   = aws_cloudfront_distribution.distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.distribution.hosted_zone_id
     evaluate_target_health = false
   }
 }
 
 # www.<domain> points at the same distribution, which redirects it to the apex.
 resource "aws_route53_record" "www" {
-  for_each = var.enable_cloudfront ? toset(["A", "AAAA"]) : toset([])
+  for_each = local.custom_domain ? toset(["A", "AAAA"]) : toset([])
   zone_id  = aws_route53_zone.zone[0].zone_id
   name     = "www.${var.domain_name}"
   type     = each.key
 
   alias {
-    name                   = aws_cloudfront_distribution.distribution[0].domain_name
-    zone_id                = aws_cloudfront_distribution.distribution[0].hosted_zone_id
+    name                   = aws_cloudfront_distribution.distribution.domain_name
+    zone_id                = aws_cloudfront_distribution.distribution.hosted_zone_id
     evaluate_target_health = false
   }
 }
@@ -321,7 +383,7 @@ resource "aws_route53_record" "dmarc" {
 }
 
 resource "aws_acm_certificate_validation" "cert" {
-  count                   = var.enable_cloudfront ? 1 : 0
+  count                   = local.custom_domain ? 1 : 0
   certificate_arn         = aws_acm_certificate.cert[0].arn
   validation_record_fqdns = [for r in aws_route53_record.cert_validation : r.fqdn]
 }

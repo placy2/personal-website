@@ -4,10 +4,14 @@
 //    with the same path, so there's one canonical host. The query string is
 //    dropped: the site uses none, and rebuilding it here risks re-encoding it.
 //
-// 2. Each prerendered route lives at <route>/index.html in S3. The S3 website
-//    origin only maps a "directory" URL to its index.html when the URL ends in
-//    "/", so without this a direct load of /about 404s. This rewrites
-//    extensionless paths to their index.html before the request reaches S3.
+// 2. Retired routes get a 301 to their replacement (/projects -> /work). Same
+//    query-string rule as above. On www, the www redirect goes straight to the
+//    replacement path, so it's one hop, not two.
+//
+// 3. Each prerendered route lives at <route>/index.html in S3. The origin is
+//    the bucket's REST endpoint, which has no index document at all: it only
+//    serves exact keys. This rewrites extensionless paths to their index.html
+//    before the request reaches S3, so it is what serves every page.
 //
 //   /           -> /index.html
 //   /about      -> /about/index.html
@@ -15,22 +19,37 @@
 //   /robots.txt -> unchanged (has an extension)
 //
 // Unknown paths (/nope -> /nope/index.html) have no such key, so S3 returns a
-// real 404 (body: its error document, index.html) and CloudFront passes it
-// through unchanged.
+// real 404. The distribution's custom_error_response swaps in index.html as
+// the body and keeps the 404 status.
+var REDIRECTS = {
+  '/projects': '/work',
+  '/projects/': '/work',
+};
+
+function redirect(location) {
+  return {
+    statusCode: 301,
+    statusDescription: 'Moved Permanently',
+    headers: {
+      location: { value: location },
+      'cache-control': { value: 'max-age=86400' },
+    },
+  };
+}
+
 function handler(event) {
   var request = event.request;
   var uri = request.uri;
   var host = request.headers.host ? request.headers.host.value.toLowerCase() : '';
+  var target = REDIRECTS[uri];
 
   if (host.indexOf('www.') === 0) {
-    return {
-      statusCode: 301,
-      statusDescription: 'Moved Permanently',
-      headers: {
-        location: { value: 'https://' + host.slice(4) + uri },
-        'cache-control': { value: 'max-age=86400' },
-      },
-    };
+    return redirect('https://' + host.slice(4) + (target || uri));
+  }
+
+  if (target) {
+    // Relative, so it works on the custom domain and the *.cloudfront.net name.
+    return redirect(target);
   }
 
   if (uri.endsWith('/')) {

@@ -19,6 +19,7 @@ on:
       - "frontend/**"
       - "terraform/**"
       - "scripts/smoke-test.sh"
+      - "scripts/upload-site.sh"
       - ".github/workflows/deploy.yml"
       - "!frontend/**/*.md"
       - "!frontend/**/*.test.ts"
@@ -120,7 +121,7 @@ jobs:
 
           FRONTEND_CHANGES=$(changed frontend/)
           TERRAFORM_CHANGES=$(changed terraform/)
-          WORKFLOW_CHANGES=$(changed .github/workflows/deploy.yml scripts/smoke-test.sh)
+          WORKFLOW_CHANGES=$(changed .github/workflows/deploy.yml scripts/smoke-test.sh scripts/upload-site.sh)
 
           # Set outputs
           if [ -n "$FRONTEND_CHANGES" ]; then
@@ -177,7 +178,7 @@ jobs:
           echo "This is the expected 'happy path' when changes don't affect:"
           echo "  - Frontend application (/frontend)"
           echo "  - Terraform infrastructure (/terraform)"
-          echo "  - Deploy workflow or smoke test (deploy.yml, scripts/smoke-test.sh)"
+          echo "  - Deploy workflow or scripts (deploy.yml, scripts/smoke-test.sh, scripts/upload-site.sh)"
           echo "Tests, lint/format config and docs are excluded; see on.push.paths."
 
   cancel-superseded:
@@ -375,18 +376,31 @@ jobs:
         working-directory: ./terraform
         run: terraform output
 
-      - name: Get S3 URL for smoke tests
-        id: get-url
+      - name: Read Terraform outputs
+        id: tf
         working-directory: ./terraform
         run: |
-          S3_URL=$(terraform output -raw s3_url)
-          echo "s3_url=$S3_URL" >> $GITHUB_OUTPUT
-          echo "Testing URL: $S3_URL"
+          {
+            echo "bucket=$(terraform output -raw s3_bucket_name)"
+            echo "distribution_id=$(terraform output -raw cloudfront_distribution_id)"
+            echo "cloudfront_url=$(terraform output -raw cloudfront_url)"
+            # Only assert the bucket is private once cutover phase 2 is applied.
+            if [ "$(terraform output -raw origin_private)" = "true" ]; then
+              echo "s3_direct_url=$(terraform output -raw s3_direct_url)"
+            else
+              echo "s3_direct_url="
+            fi
+          } >> "$GITHUB_OUTPUT"
+
+      # Terraform owns the infra; content goes up here (new assets first, HTML
+      # last), then CloudFront is invalidated. See scripts/upload-site.sh.
+      - name: Upload site content
+        run: bash ./scripts/upload-site.sh "${{ steps.tf.outputs.bucket }}" "${{ steps.tf.outputs.distribution_id }}" ./frontend/dist
 
       - name: Run smoke tests
         run: |
           chmod +x ./scripts/smoke-test.sh
-          ./scripts/smoke-test.sh "${{ steps.get-url.outputs.s3_url }}"
+          ./scripts/smoke-test.sh "${{ steps.tf.outputs.cloudfront_url }}" "${{ steps.tf.outputs.s3_direct_url }}"
 
   deploy-prod-plan:
     name: Terraform Plan (Production)
@@ -477,33 +491,36 @@ jobs:
         working-directory: ./terraform
         run: terraform apply -lock-timeout=5m -var-file="env/prod.tfvars" -auto-approve
 
-      - name: Invalidate CloudFront Cache
-        working-directory: ./terraform
-        run: |
-          DISTRIBUTION_ID=$(terraform output -raw cloudfront_distribution_id)
-          if [ -n "$DISTRIBUTION_ID" ]; then
-            echo "Invalidating CloudFront distribution: $DISTRIBUTION_ID"
-            aws cloudfront create-invalidation --distribution-id "$DISTRIBUTION_ID" --paths "/*"
-          else
-            echo "No CloudFront distribution ID found. Skipping cache invalidation."
-          fi
-
       - name: Output URLs
         working-directory: ./terraform
         run: terraform output
 
-      - name: Get CloudFront URL for smoke tests
-        id: get-url
+      - name: Read Terraform outputs
+        id: tf
         working-directory: ./terraform
         run: |
-          CLOUDFRONT_URL=$(terraform output -raw cloudfront_url)
-          echo "cloudfront_url=$CLOUDFRONT_URL" >> $GITHUB_OUTPUT
-          echo "Testing URL: $CLOUDFRONT_URL"
+          {
+            echo "bucket=$(terraform output -raw s3_bucket_name)"
+            echo "distribution_id=$(terraform output -raw cloudfront_distribution_id)"
+            echo "cloudfront_url=$(terraform output -raw cloudfront_url)"
+            # Only assert the bucket is private once cutover phase 2 is applied.
+            if [ "$(terraform output -raw origin_private)" = "true" ]; then
+              echo "s3_direct_url=$(terraform output -raw s3_direct_url)"
+            else
+              echo "s3_direct_url="
+            fi
+          } >> "$GITHUB_OUTPUT"
+
+      # Terraform owns the infra; content goes up here (new assets first, HTML
+      # last), then a "/*" invalidation that the script waits on, so the smoke
+      # tests below see this deploy. See scripts/upload-site.sh.
+      - name: Upload site content
+        run: bash ./scripts/upload-site.sh "${{ steps.tf.outputs.bucket }}" "${{ steps.tf.outputs.distribution_id }}" ./frontend/dist
 
       - name: Run smoke tests against Cloudfront URL
         run: |
           chmod +x ./scripts/smoke-test.sh
-          ./scripts/smoke-test.sh "${{ steps.get-url.outputs.cloudfront_url }}"
+          ./scripts/smoke-test.sh "${{ steps.tf.outputs.cloudfront_url }}" "${{ steps.tf.outputs.s3_direct_url }}"
       
       - name: Run smoke tests against live URL
         run: |

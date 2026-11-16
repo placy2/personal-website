@@ -1,16 +1,21 @@
 output "website_url" {
-  description = "Website URL (HTTPS)"
-  value       = var.enable_cloudfront ? aws_cloudfront_distribution.distribution[0].domain_name : null
+  description = "Website hostname (the CloudFront domain)"
+  value       = aws_cloudfront_distribution.distribution.domain_name
 }
 
 output "cloudfront_url" {
-  description = "CloudFront distribution URL (if enabled)"
-  value       = var.enable_cloudfront ? "https://${aws_cloudfront_distribution.distribution[0].domain_name}" : null
+  description = "CloudFront distribution URL"
+  value       = "https://${aws_cloudfront_distribution.distribution.domain_name}"
 }
 
-output "s3_url" {
-  description = "S3 hosting URL (HTTP)"
-  value       = "http://${aws_s3_bucket_website_configuration.hosting.website_endpoint}"
+output "s3_direct_url" {
+  description = "Direct (non-CloudFront) S3 REST URL for the bucket"
+  value       = "https://${aws_s3_bucket.bucket.bucket_regional_domain_name}"
+}
+
+output "origin_private" {
+  description = "True once the bucket is locked to CloudFront OAC (cutover phase 2 done)"
+  value       = !var.allow_public_read
 }
 
 output "s3_bucket_name" {
@@ -30,5 +35,5 @@ output "nameservers" {
 
 output "cloudfront_distribution_id" {
   description = "Distribution ID needed for cache invalidation in GH workflow"
-  value       = var.enable_cloudfront ? aws_cloudfront_distribution.distribution[0].id : null
+  value       = aws_cloudfront_distribution.distribution.id
 }

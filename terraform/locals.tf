@@ -3,19 +3,11 @@ locals {
     Environment = var.environment
   })
 
-  content_types = {
-    ".html" = "text/html"
-    ".css"  = "text/css"
-    ".js"   = "text/javascript"
-    ".jpeg" = "image/jpeg"
-    ".jpg"  = "image/jpeg"
-    ".png"  = "image/png"
-    ".webp" = "image/webp"
-    ".svg"  = "image/svg+xml"
-    ".gif"  = "image/gif"
-    ".ico"  = "image/x-icon"
-    ".json" = "application/json"
-    ".txt"  = "text/plain"
-    ".xml"  = "application/xml"
-  }
+  # Only prod has the custom domain (Route 53 zone, ACM cert, aliases). Dev's
+  # distribution answers on its *.cloudfront.net name with the default cert.
+  custom_domain = var.environment == "prod"
+
+  # Object content types and cache-control headers are set by
+  # scripts/upload-site.sh, not Terraform. Keep that script's type map in sync
+  # if a new file extension starts shipping in frontend/dist.
 }

@@ -16,22 +16,26 @@ cd "$(dirname "$0")/../terraform"
 echo "📋 Initializing Terraform for ${ENVIRONMENT}..."
 terraform init -reconfigure -backend-config="env/${ENVIRONMENT}.s3.tfbackend"
 
-# Check if frontend build exists
-if [ ! -d "../frontend/dist" ]; then
-    echo "⚠️  Frontend build not found. Building frontend..."
-    cd ../frontend
-    npm run build
-    cd ../terraform
-fi
-
 case $ACTION in
     "plan")
         echo "📊 Running terraform plan..."
         terraform plan -lock-timeout=5m -var-file="env/${ENVIRONMENT}.tfvars"
         ;;
     "apply")
+        # Terraform no longer touches site content; upload-site.sh does,
+        # after apply. Check the build first so a missing dist/ fails before
+        # any infra changes.
+        if [ ! -d "../frontend/dist" ]; then
+            echo "⚠️  Frontend build not found. Building frontend..."
+            (cd ../frontend && npm run build)
+        fi
         echo "🔧 Running terraform apply..."
         terraform apply -lock-timeout=5m -var-file="env/${ENVIRONMENT}.tfvars" -auto-approve
+        echo "📦 Uploading site content..."
+        ../scripts/upload-site.sh \
+            "$(terraform output -raw s3_bucket_name)" \
+            "$(terraform output -raw cloudfront_distribution_id)" \
+            ../frontend/dist
         echo "✅ Deployment complete!"
         terraform output
         ;;

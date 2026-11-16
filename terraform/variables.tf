@@ -16,8 +16,8 @@ variable "bucket_name" {
   type        = string
 }
 
-variable "enable_cloudfront" {
-  description = "Whether to enable CloudFront distribution (disable by default for cost savings in dev)"
+variable "allow_public_read" {
+  description = "Cutover phase 1 only: keep the legacy public-read bucket policy and S3 website endpoint alongside the CloudFront OAC grant"
   type        = bool
   default     = false
 }
