@@ -6,7 +6,6 @@
 # Usage: ./smoke-test.sh <url> [s3-direct-url]
 #   s3-direct-url  the bucket's REST URL (terraform output -raw s3_direct_url).
 #                  When given, the bucket must refuse direct reads (403).
-#                  Omit it until private-origin cutover phase 2 is applied.
 # Example: ./smoke-test.sh https://d1234abcd.cloudfront.net https://parkerlacy-dev-hosting.s3.us-east-1.amazonaws.com
 
 set -e
@@ -260,8 +259,7 @@ for OLD_PATH in /projects /projects/; do
   fi
 done
 
-# Test 13: the bucket itself is private. Only run once the origin is locked
-# down (cutover phase 2); before that the legacy public-read grant is expected.
+# Test 13: the bucket itself is private (only CloudFront can read it).
 if [ -n "$S3_DIRECT_URL" ]; then
   echo "Test 13: Checking the bucket refuses direct reads..."
   DIRECT_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${S3_DIRECT_URL%/}/index.html")
@@ -272,7 +270,7 @@ if [ -n "$S3_DIRECT_URL" ]; then
     exit 1
   fi
 else
-  echo -e "${YELLOW}Test 13: skipped (no S3 direct URL given; origin not locked down yet)${NC}"
+  echo -e "${YELLOW}Test 13: skipped (no S3 direct URL given)${NC}"
 fi
 
 echo "----------------------------------------"

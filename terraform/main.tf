@@ -16,17 +16,15 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "bucket_encryption
   }
 }
 
-# depends_on the distribution so that, on any apply, the bucket is locked only
-# after the distribution update (origin switch + OAC signing) has finished. The
-# provider waits for the distribution to reach Deployed before returning.
+# Private bucket: only CloudFront (via OAC, see the policy below) can read it.
 resource "aws_s3_bucket_public_access_block" "bucket_access_block" {
   depends_on = [aws_cloudfront_distribution.distribution]
   bucket     = aws_s3_bucket.bucket.id
 
   block_public_acls       = true
-  block_public_policy     = !var.allow_public_read
+  block_public_policy     = true
   ignore_public_acls      = true
-  restrict_public_buckets = !var.allow_public_read
+  restrict_public_buckets = true
 }
 
 resource "aws_s3_bucket_policy" "bucket_policy" {
@@ -34,70 +32,34 @@ resource "aws_s3_bucket_policy" "bucket_policy" {
   bucket     = aws_s3_bucket.bucket.id
   policy = jsonencode({
     Version = "2012-10-17",
-    Statement = concat(
-      [
-        {
-          Sid       = "CloudFrontReadObjects"
-          Effect    = "Allow"
-          Principal = { Service = "cloudfront.amazonaws.com" }
-          Action    = "s3:GetObject"
-          Resource  = "${aws_s3_bucket.bucket.arn}/*"
-          Condition = {
-            StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.distribution.arn }
-          }
-        },
-        {
-          Sid       = "CloudFrontListBucket"
-          Effect    = "Allow"
-          Principal = { Service = "cloudfront.amazonaws.com" }
-          Action    = "s3:ListBucket"
-          Resource  = aws_s3_bucket.bucket.arn
-          Condition = {
-            StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.distribution.arn }
-          }
-        },
-      ],
-      # Cutover phase 1 only: the old public-read grant, so edges still on the
-      # website endpoint keep working while the distribution update propagates.
-      var.allow_public_read ? [
-        {
-          Sid       = "PublicReadGetObject"
-          Effect    = "Allow"
-          Principal = "*"
-          Action    = "s3:GetObject"
-          Resource  = "${aws_s3_bucket.bucket.arn}/*"
-        },
-      ] : [],
-    )
+    Statement = [
+      {
+        Sid       = "CloudFrontReadObjects"
+        Effect    = "Allow"
+        Principal = { Service = "cloudfront.amazonaws.com" }
+        Action    = "s3:GetObject"
+        Resource  = "${aws_s3_bucket.bucket.arn}/*"
+        Condition = {
+          StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.distribution.arn }
+        }
+      },
+      # Lets S3 answer a missing key with 404 instead of 403.
+      {
+        Sid       = "CloudFrontListBucket"
+        Effect    = "Allow"
+        Principal = { Service = "cloudfront.amazonaws.com" }
+        Action    = "s3:ListBucket"
+        Resource  = aws_s3_bucket.bucket.arn
+        Condition = {
+          StringEquals = { "AWS:SourceArn" = aws_cloudfront_distribution.distribution.arn }
+        }
+      },
+    ]
   })
 }
 
 # Site content (frontend/dist) is uploaded by scripts/upload-site.sh after
-# apply. This forgets the objects Terraform used to manage without deleting
-# them from the bucket.
-removed {
-  from = aws_s3_object.file
-
-  lifecycle {
-    destroy = false
-  }
-}
-
-# Legacy public website endpoint. Kept only while allow_public_read is on, so
-# cutover phase 1 can be rolled back by pointing the origin back at it.
-# Nothing serves from it once CloudFront reads the REST endpoint.
-resource "aws_s3_bucket_website_configuration" "hosting" {
-  count  = var.allow_public_read ? 1 : 0
-  bucket = aws_s3_bucket.bucket.id
-
-  index_document {
-    suffix = "index.html"
-  }
-
-  error_document {
-    key = "index.html"
-  }
-}
+# apply, not by Terraform.
 
 moved {
   from = aws_s3_bucket_website_configuration.hosting

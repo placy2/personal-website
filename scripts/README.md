@@ -139,9 +139,8 @@ Example:
 ```
 
 Runs against `terraform output cloudfront_url` in both environments (and the live domain in prod).
-The optional second argument is `terraform output s3_direct_url`; CI passes it only when
-`terraform output origin_private` is `true` (after cutover phase 2). See the deploy workflow's
-"Read Terraform outputs" steps.
+The optional second argument is `terraform output s3_direct_url`; CI always passes it (see the
+deploy workflow's "Read Terraform outputs" steps).
 
 Checks performed (exit code `0` unless the hard checks below fail):
 - **HTTP 200** status (hard failure if not 200, or if `curl` can't connect at all).
