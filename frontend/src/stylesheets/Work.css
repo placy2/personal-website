@@ -55,3 +55,27 @@
 .case-study section h2 {
   margin-bottom: var(--space-2);
 }
+
+/* Side projects: deliberately lighter than the case study cards so the
+   case studies stay the focus of the page. */
+.side-project-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.side-project-list li {
+  padding-left: var(--space-3);
+  border-left: 2px solid var(--theme-border);
+}
+
+.side-project-list h3 {
+  font-size: var(--text-base);
+  margin: 0 0 var(--space-1);
+}
+
+.side-project-list p {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--theme-muted);
+}

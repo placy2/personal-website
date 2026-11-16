@@ -6,7 +6,6 @@ import Home from './Home';
 import About from './About';
 import Work from './Work';
 import CaseStudy from './CaseStudy';
-import Projects from './Projects';
 import Resume from './Resume';
 import NotFound from './NotFound';
 import { expectNoA11yViolations } from '../test/axe';
@@ -48,11 +47,6 @@ describe('Page accessibility', () => {
         </main>
       </MemoryRouter>
     );
-    await expectNoA11yViolations(container);
-  });
-
-  it('Projects page has no WCAG A/AA violations', async () => {
-    const { container } = renderInMain(<Projects />);
     await expectNoA11yViolations(container);
   });
 

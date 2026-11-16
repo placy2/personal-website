@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { CASE_STUDIES } from '../data/caseStudies';
-import { workPath } from '../constants';
+import { EXTERNAL_LINKS, workPath } from '../constants';
 import '../stylesheets/Work.css';
 
 const Work: React.FC = () => {
@@ -28,6 +28,19 @@ const Work: React.FC = () => {
               </ul>
             </li>
           ))}
+        </ul>
+      </section>
+      <section aria-labelledby="side-projects-heading" className="side-projects">
+        <h2 id="side-projects-heading">Side projects</h2>
+        <ul className="side-project-list">
+          <li>
+            <h3>
+              <a href={EXTERNAL_LINKS.SITE_REPO} target="_blank" rel="noopener noreferrer">
+                Personal Site (This!)
+              </a>
+            </h3>
+            <p>My own site — React frontend with AWS hosting included, built with Terraform.</p>
+          </li>
         </ul>
       </section>
     </div>

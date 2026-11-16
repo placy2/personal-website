@@ -41,12 +41,6 @@ export const ROUTE_META: RouteMeta[] = [
     type: 'article' as const,
   })),
   {
-    path: ROUTES.PROJECTS,
-    title: `Projects - ${APP_CONFIG.author}`,
-    description:
-      "A collection of Parker Lacy's public projects, including this site's own Terraform-provisioned AWS infrastructure.",
-  },
-  {
     path: ROUTES.RESUME,
     title: `Resume - ${APP_CONFIG.author}`,
     description: "Request a copy of Parker Lacy's resume.",

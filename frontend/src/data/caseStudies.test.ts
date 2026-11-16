@@ -24,3 +24,11 @@ describe('CASE_STUDIES', () => {
     }
   });
 });
+
+describe('ROUTE_META', () => {
+  // /projects was merged into /work. Leaving it here would prerender it,
+  // list it in the sitemap and keep its head tags alive.
+  it('does not include the removed /projects page', () => {
+    expect(ROUTE_META.map(route => route.path)).not.toContain('/projects');
+  });
+});
